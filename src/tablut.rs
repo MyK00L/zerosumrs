@@ -120,20 +120,13 @@ const STARTING_POSITION: [[Tile; 9]; 9] = [
 	],
 ];
 
-const BLOCKS: [[bool; 9]; 9] = [
-	[false, false, false, true, true, true, false, false, false],
-	[false, false, false, false, true, false, false, false, false],
-	[
-		false, false, false, false, false, false, false, false, false,
-	],
-	[true, false, false, false, false, false, false, false, true],
-	[true, true, false, false, true, false, false, true, true],
-	[true, false, false, false, false, false, false, false, true],
-	[
-		false, false, false, false, false, false, false, false, false,
-	],
-	[false, false, false, false, true, false, false, false, false],
-	[false, false, false, true, true, true, false, false, false],
+const BLOCKS: [bool; 81] = [
+	false, false, false, true, true, true, false, false, false, false, false, false, false, true,
+	false, false, false, false, false, false, false, false, false, false, false, false, false, true,
+	false, false, false, false, false, false, false, true, true, true, false, false, true, false,
+	false, true, true, true, false, false, false, false, false, false, false, true, false, false,
+	false, false, false, false, false, false, false, false, false, false, false, true, false, false,
+	false, false, false, false, false, true, true, true, false, false, false,
 ];
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -141,6 +134,15 @@ pub struct Tablut {
 	a: (u64, u64, u64),
 	turn: bool,
 	st: Vec<(u64, u64, u64)>, // whole state
+}
+fn mapc(x: u8, y: u8) -> u8 {
+	y * 9 + x
+}
+fn unmapc(p: u8) -> (u8, u8) {
+	(p % 9, p / 9)
+}
+fn is_block_um(p: u8) -> bool {
+	BLOCKS[p as usize]
 }
 impl Tablut {
 	fn get(&self, mut pos: u8) -> Tile {
@@ -175,27 +177,21 @@ impl Tablut {
 			self.get(a1) == Tile::A
 				&& (self.get(a2) == Tile::D || self.get(a2) == Tile::K || is_block_um(a2))
 		} else {
-			(self.get(a1) == Tile::D && (self.get(a2) == Tile::D || is_block_um(a2)))
+			(self.get(a1) == Tile::D && (self.get(a2) == Tile::A || is_block_um(a2)))
 				|| (self.get(a1) == Tile::K
 					&& (self.get(a1 + 9) == Tile::A || is_block_um(a1 + 9))
 					&& (self.get(a1 - 9) == Tile::A || is_block_um(a1 - 9))
 					&& (self.get(a1 + 1) == Tile::A || is_block_um(a1 + 1))
 					&& (self.get(a1 - 1) == Tile::A || is_block_um(a1 - 1)))
+				|| (self.get(a1) == Tile::K
+					&& a1 != mapc(4, 4)
+					&& a1 != mapc(4, 3)
+					&& a1 != mapc(3, 4)
+					&& a1 != mapc(4, 5)
+					&& a1 != mapc(5, 4)
+					&& (self.get(a2) == Tile::A || is_block_um(a2)))
 		}
 	}
-}
-fn mapc(x: u8, y: u8) -> u8 {
-	y * 9 + x
-}
-fn unmapc(p: u8) -> (u8, u8) {
-	(p % 9, p / 9)
-}
-fn is_block(x: u8, y: u8) -> bool {
-	BLOCKS[y as usize][x as usize]
-}
-fn is_block_um(p: u8) -> bool {
-	let (x, y) = unmapc(p);
-	is_block(x, y)
 }
 impl Game for Tablut {
 	type M = (u8, u8); // compressed coords from and to (4bits x, 4bits y)
@@ -223,102 +219,67 @@ impl Game for Tablut {
 		for y in 0..9 {
 			let mut last = 128u8;
 			for x in 0..9 {
-				match self.get(mapc(x, y)) {
-					Tile::K | Tile::D => {
-						if self.turn {
-							last = mapc(x, y);
-						}
+				let p = mapc(x, y);
+				let t = self.get(p);
+				if t == Tile::E {
+					if is_block_um(p) && (last==128 || !is_block_um(last) || last-p>2) {
+						last = 128;
+					} else if last != 128 {
+						ans.push((last, p));
 					}
-					Tile::A => {
-						if !self.turn {
-							last = mapc(x, y);
-						}
-					}
-					Tile::E => {
-						if is_block(x, y) {
-							last = 128;
-						} else if last != 128 {
-							ans.push((last, mapc(x, y)));
-						}
-					}
+				} else {
+					last = if self.turn == (t != Tile::A) { p } else { 128 }
 				}
 			}
 		}
-
 		// left
 		for y in 0..9 {
 			let mut last = 128u8;
 			for x in (0..9).rev() {
-				match self.get(mapc(x, y)) {
-					Tile::K | Tile::D => {
-						if self.turn {
-							last = mapc(x, y);
-						}
+				let p = mapc(x, y);
+				let t = self.get(p);
+				if t == Tile::E {
+					if is_block_um(p) && (last==128 || !is_block_um(last) || p-last>2) {
+						last = 128;
+					} else if last != 128 {
+						ans.push((last, p));
 					}
-					Tile::A => {
-						if !self.turn {
-							last = mapc(x, y);
-						}
-					}
-					Tile::E => {
-						if is_block(x, y) {
-							last = 128;
-						} else if last != 128 {
-							ans.push((last, mapc(x, y)));
-						}
-					}
+				} else {
+					last = if self.turn == (t != Tile::A) { p } else { 128 }
 				}
 			}
 		}
-
 		// down
 		for x in 0..9 {
 			let mut last = 128u8;
 			for y in 0..9 {
-				match self.get(mapc(x, y)) {
-					Tile::K | Tile::D => {
-						if self.turn {
-							last = mapc(x, y);
-						}
+				let p = mapc(x, y);
+				let t = self.get(p);
+				if t == Tile::E {
+					if is_block_um(p) && (last==128 || !is_block_um(last) || last-p>2*9) {
+						last = 128;
+					} else if last != 128 {
+						ans.push((last, p));
 					}
-					Tile::A => {
-						if !self.turn {
-							last = mapc(x, y);
-						}
-					}
-					Tile::E => {
-						if is_block(x, y) {
-							last = 128;
-						} else if last != 128 {
-							ans.push((last, mapc(x, y)));
-						}
-					}
+				} else {
+					last = if self.turn == (t != Tile::A) { p } else { 128 }
 				}
 			}
 		}
-
 		// up
 		for x in 0..9 {
 			let mut last = 128u8;
 			for y in (0..9).rev() {
-				match self.get(mapc(x, y)) {
-					Tile::K | Tile::D => {
-						if self.turn {
-							last = mapc(x, y);
-						}
+				let p = mapc(x, y);
+				let t = self.get(p);
+				if t == Tile::E {
+					if is_block_um(p) && (last==128 || !is_block_um(last) || p-last>2*9) {
+						last = 128;
+					} else if last != 128 {
+						ans.push((last, p));
 					}
-					Tile::A => {
-						if !self.turn {
-							last = mapc(x, y);
-						}
-					}
-					Tile::E => {
-						if is_block(x, y) {
-							last = 128;
-						} else if last != 128 {
-							ans.push((last, mapc(x, y)));
-						}
-					}
+				} else {
+					last = if self.turn == (t != Tile::A) { p } else { 128 }
 				}
 			}
 		}
@@ -342,6 +303,13 @@ impl Game for Tablut {
 				return State::Win;
 			}
 		}
+		if self.get_moves().is_empty() {
+			return if self.turn {
+				State::Lose
+			} else {
+				State::Win
+			};
+		}
 		for y in 1..8 {
 			for x in 1..8 {
 				if self.get(mapc(y, x)) == Tile::K {
@@ -363,13 +331,13 @@ impl Game for Tablut {
 			self.set(m.1 + 9, Tile::E);
 		}
 		if m.1 >= 18 && self.captured(m.1 - 9, m.1 - 18) {
-			self.set(m.1 + 9, Tile::E);
+			self.set(m.1 - 9, Tile::E);
 		}
 		if m.1 % 9 < 7 && self.captured(m.1 + 1, m.1 + 2) {
-			self.set(m.1 + 9, Tile::E);
+			self.set(m.1 + 1, Tile::E);
 		}
 		if m.1 % 9 > 2 && self.captured(m.1 - 1, m.1 - 2) {
-			self.set(m.1 + 9, Tile::E);
+			self.set(m.1 - 1, Tile::E);
 		}
 		self.turn = !self.turn;
 	}

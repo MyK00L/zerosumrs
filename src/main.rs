@@ -45,24 +45,29 @@ use othello::Othello;
 use tablut::Tablut;
 use tictactoe::Ttt;
 
-fn random_play<G: Game>() -> State {
+fn random_play<G: Game>() -> (State, usize) {
 	let mut rng = Xoroshiro128Plus::from_rng(rand::thread_rng()).unwrap();
 	let mut g = G::new(true);
+	let mut nmovs = 0;
 	while g.state() == State::Going {
 		let moves = g.get_moves();
 		let m = moves.choose(&mut rng).unwrap();
 		g.mov(&m);
+		nmovs += 1;
 	}
-	g.state()
+	(g.state(), nmovs)
 }
 
-fn print_balance<G: Game>() {
+fn print_stats<G: Game>() {
 	let mut nw = 0;
 	let mut nl = 0;
 	let mut nd = 0;
 	let mut ne = 0;
+	let mut al = 0;
 	for i in 0..1000 {
-		match random_play::<G>() {
+		let cacca = random_play::<G>();
+		al += cacca.1;
+		match cacca.0 {
 			State::Win => {
 				nw += 1;
 			}
@@ -77,7 +82,14 @@ fn print_balance<G: Game>() {
 			}
 		}
 	}
-	eprintln!("w {}\nl {}\nd {}\ne {}", nw, nl, nd, ne);
+	eprintln!(
+		"win {}\nlos {}\ndrw {}\nerr {}\navg len {}",
+		nw,
+		nl,
+		nd,
+		ne,
+		al / 1000
+	);
 }
 
 fn test_rollback<G: Game>() {
@@ -108,10 +120,7 @@ fn test_rollback<G: Game>() {
 fn main() {
 	let mut scan = Scanner::default();
 	let out = &mut BufWriter::new(stdout());
+	print_stats::<Tablut>();
 	let x = compete::<Tablut, MonteCarloTreeSearch<Tablut>, MonteCarloTreeSearch<Tablut>>();
 	write!(out, "{:?}", x);
-	//print_balance::<Othello>();
-	//let a = Tablut::new(true);
-	//eprintln!("{}", a);
-	//print_balance::<Tablut>();
 }
