@@ -13,28 +13,21 @@ pub struct MonteCarlo<G: Game> {
 }
 
 impl<G: Game> MonteCarlo<G> {
-	fn explore_branch(&mut self, turn: bool) -> u32 {
-		let mut rb = 0usize;
-		while self.g.state() == State::Going {
-			let moves = self.g.get_moves();
+	fn explore_branch(&mut self) -> u32 {
+		let mut gc = self.g.clone();
+		while gc.state() == State::Going {
+			let moves = gc.get_moves();
 			let m = moves.choose(&mut self.rng).unwrap();
-			self.g.mov(&m);
-			rb += 1;
+			gc.mov(&m);
 		}
-		let mut ans = match self.g.state() {
+		let mut ans = match gc.state() {
 			State::Win => 1u32,
 			State::Lose => 0u32,
 			_ => self.rng.next_u32() & 1,
 		};
-		if !turn {
-			ans = 1 - ans;
-		}
-		for _ in 0..rb {
-			self.g.rollback();
-		}
 		ans
 	}
-	fn step(&mut self, turn: bool) -> bool {
+	fn step(&mut self) -> bool {
 		let mut nm0 = 0;
 		if !self.table.contains_key(&self.g.get_static_state()) {
 			self.table.insert(self.g.get_static_state(), (0, 0));
@@ -49,18 +42,16 @@ impl<G: Game> MonteCarlo<G> {
 			let moves = self.g.get_moves();
 			let mut found = false;
 			let mut best = moves[0];
-			let mut value = 0.0f32;
+			let mut best_val = 0.0f32;
+			let turn = self.g.turn();
 			for m in moves.iter() {
-				let np = self
-					.table
-					.get(&self.g.get_static_state())
-					.unwrap() /*_or(&(0, 0))*/
-					.1 as f32;
+				let np = self.table.get(&self.g.get_static_state()).unwrap().1 as f32;
 				self.g.mov(m);
 				if let Some(x) = self.table.get(&self.g.get_static_state()) {
-					let val = (x.0 as f32 / x.1 as f32) + 1.5 * (np.ln() / (x.1 as f32));
-					if val > value {
-						value = val;
+					let val = (if turn { x.0 } else { x.1 - x.0 } as f32 / x.1 as f32)
+						+ 1.5 * (np.ln() / (x.1 as f32)).sqrt();
+					if val > best_val {
+						best_val = val;
 						best = *m;
 					}
 					self.g.rollback();
@@ -77,7 +68,7 @@ impl<G: Game> MonteCarlo<G> {
 				break;
 			}
 		}
-		let mc = self.explore_branch(turn);
+		let mc = self.explore_branch();
 		self.table.insert(self.g.get_static_state(), (mc, 1));
 		for _ in 0..nm0 {
 			self.g.rollback();
@@ -93,12 +84,15 @@ impl<G: Game> Ai<G> for MonteCarlo<G> {
 	fn new(t: bool) -> Self {
 		Self {
 			g: G::new(t),
-			rng: Xoroshiro128Plus::seed_from_u64(124),
+			rng: Xoroshiro128Plus::from_rng(rand::thread_rng()).unwrap(),
 			table: HashMap::new(),
 		}
 	}
 	fn state(&self) -> State {
 		self.g.state()
+	}
+	fn print2game(&self) {
+		eprintln!("{}", self.g)
 	}
 	fn turn(&self) -> bool {
 		self.g.turn()
@@ -106,9 +100,12 @@ impl<G: Game> Ai<G> for MonteCarlo<G> {
 	fn get_mov(&mut self) -> G::M {
 		let start_time = SystemTime::now();
 		let moves = self.g.get_moves();
-		let turn = self.g.turn();
 		let mut i = 0;
-		while self.step(turn) {
+		while self.step() {
+			for _ in 0..128 {
+				self.step();
+				i += 1;
+			}
 			if start_time.elapsed().unwrap().as_millis() > 250 {
 				break;
 			}
@@ -116,24 +113,25 @@ impl<G: Game> Ai<G> for MonteCarlo<G> {
 		}
 		let mut best_mov = moves[0];
 		let mut best_val = 0.0;
+		let turn = self.g.turn();
 		for m in moves {
 			self.g.mov(&m);
 			let x = self
 				.table
 				.get(&self.g.get_static_state())
-				.unwrap_or(&(0, 0));
+				.unwrap_or(&(1, 2));
 			self.g.rollback();
-			let val = (x.0 as f32 + 1.0) / (x.1 as f32 + 2.0);
-			eprintln!("{}/{}", x.0, x.1);
+			let val = (if turn { x.0 } else { x.1 - x.0 } as f32) / (x.1 as f32);
 			if val > best_val {
 				best_val = val;
 				best_mov = m;
 			}
 		}
 		eprintln!(
-			"monte_carlo chose move in {} milliseconds with {} iterations",
+			"monte_carlo chose move in {} milliseconds with {} iterations | confidence: {}",
 			start_time.elapsed().unwrap().as_millis(),
-			i
+			i,
+			best_val
 		);
 		best_mov
 	}

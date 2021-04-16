@@ -15,7 +15,7 @@ impl<G: Game> MinimaxHard<G> {
 		}
 		let mut old_depth = 0;
 		if let Some(x) = self.table.get(&self.g.get_static_state()) {
-			if depth <= x.1 || (depth<=x.1+4 && depth>4 && depth<14) {
+			if depth <= x.1 {
 				return x.0;
 			}
 			old_depth = x.1;
@@ -36,7 +36,7 @@ impl<G: Game> MinimaxHard<G> {
 				ans
 			}
 		});
-		for m in moves.iter()/*.take(if depth > 3 { 3 } else { 6 })*/ {
+		for m in moves.iter() {
 			self.g.mov(m);
 			let h = self.minimax(a, b, depth - 1);
 			self.g.rollback();
@@ -51,7 +51,7 @@ impl<G: Game> MinimaxHard<G> {
 				break;
 			}
 		}
-		if depth > old_depth && depth > 4 {
+		if depth > old_depth {
 			self.table.insert(self.g.get_static_state(), (res, depth));
 		}
 		res
@@ -84,7 +84,7 @@ impl<G: Game> MinimaxHard<G> {
 				ans
 			}
 		});
-		for m in moves.iter().take(if depth > 3 { 3 } else { 6 }) {
+		for m in moves.iter() {
 			self.g.mov(m);
 			let h = self.minimax(a, b, depth - 1);
 			self.g.rollback();
@@ -105,7 +105,7 @@ impl<G: Game> MinimaxHard<G> {
 				break;
 			}
 		}
-		if depth > old_depth && depth > 4 {
+		if depth > old_depth /*&& depth > 4*/ {
 			self.table.insert(self.g.get_static_state(), (res, depth));
 		}
 		ans
@@ -122,6 +122,9 @@ impl<G: Game> Ai<G> for MinimaxHard<G> {
 	fn state(&self) -> State {
 		self.g.state()
 	}
+	fn print2game(&self) {
+		eprintln!("{}", self.g);
+	}
 	fn turn(&self) -> bool {
 		self.g.turn()
 	}
@@ -130,7 +133,8 @@ impl<G: Game> Ai<G> for MinimaxHard<G> {
 		let mut depth = 1;
 		let mut ans = self.minimax_move(1);
 		loop {
-			if start_time.elapsed().unwrap().as_millis() > 250 {
+			let elapsed = start_time.elapsed().unwrap().as_millis() + 1;
+			if elapsed > 250 {
 				break;
 			}
 			depth += 1;

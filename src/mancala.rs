@@ -42,6 +42,9 @@ impl Game for Mancala {
 				.collect()
 		}
 	}
+	fn get_moves_sorted(&self) -> Vec<u8> {
+		self.get_moves()
+	}
 	fn state(&self) -> State {
 		let sumhd: u8 = self.a.iter().take(6).sum();
 		let sumhu: u8 = self.a.iter().skip(7).take(6).sum();

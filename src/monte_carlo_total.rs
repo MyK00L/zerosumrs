@@ -12,24 +12,20 @@ pub struct MonteCarloTotal<G: Game> {
 
 impl<G: Game> MonteCarloTotal<G> {
 	fn explore_branch(&mut self, m0: &G::M, turn: bool) -> u32 {
-		self.g.mov(&m0);
-		let mut rb = 1usize;
-		while self.g.state() == State::Going {
-			let moves = self.g.get_moves();
+		let mut gc = self.g.clone();
+		gc.mov(&m0);
+		while gc.state() == State::Going {
+			let moves = gc.get_moves();
 			let m = moves.choose(&mut self.rng).unwrap();
-			self.g.mov(&m);
-			rb += 1;
+			gc.mov(&m);
 		}
-		let mut ans = match self.g.state() {
+		let mut ans = match gc.state() {
 			State::Win => 1,
 			State::Lose => 0,
 			_ => self.rng.next_u32() % 2,
 		};
 		if !turn {
 			ans = 1 - ans;
-		}
-		for _ in 0..rb {
-			self.g.rollback();
 		}
 		ans
 	}
@@ -39,11 +35,14 @@ impl<G: Game> Ai<G> for MonteCarloTotal<G> {
 	fn new(t: bool) -> Self {
 		Self {
 			g: G::new(t),
-			rng: Xoroshiro128Plus::seed_from_u64(124),
+			rng: Xoroshiro128Plus::from_rng(rand::thread_rng()).unwrap(),
 		}
 	}
 	fn state(&self) -> State {
 		self.g.state()
+	}
+	fn print2game(&self) {
+		eprintln!("{}", self.g)
 	}
 	fn turn(&self) -> bool {
 		self.g.turn()
@@ -52,7 +51,7 @@ impl<G: Game> Ai<G> for MonteCarloTotal<G> {
 		let start_time = SystemTime::now();
 		let moves = self.g.get_moves();
 		let turn = self.g.turn();
-		let mut v = vec![(1u32, 2u32); moves.len()];
+		let mut v = vec![0u32; moves.len()];
 		let mut i = 0;
 		loop {
 			if start_time.elapsed().unwrap().as_millis() > 250 {
@@ -60,22 +59,16 @@ impl<G: Game> Ai<G> for MonteCarloTotal<G> {
 			}
 			i += 1;
 			for mm in moves.iter().enumerate() {
-				v[mm.0].1 += 1;
-				v[mm.0].0 += self.explore_branch(mm.1, turn);
+				v[mm.0] += self.explore_branch(mm.1, turn);
 			}
 		}
-		let best_ind = v
-			.iter()
-			.enumerate()
-			.max_by(|a, b| ((a.1).0 * (b.1).1).cmp(&((b.1).0 * (a.1).1)))
-			.unwrap()
-			.0;
-		eprintln!("{:?}", v);
+		let best_ind = v.iter().enumerate().max_by_key(|x| x.1).unwrap().0;
 		let ans = moves[best_ind];
 		eprintln!(
-			"monte_carlo_total chose move in {} milliseconds with {} iterations",
+			"monte_carlo_total chose move in {} milliseconds with {} iterations | confidence: {}",
 			start_time.elapsed().unwrap().as_millis(),
-			i
+			i,
+			v[best_ind] as f32 / i as f32,
 		);
 		ans
 	}

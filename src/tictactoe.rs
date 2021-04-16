@@ -28,6 +28,9 @@ impl Game for Ttt {
 			.map(|x| x.0 as u8)
 			.collect()
 	}
+	fn get_moves_sorted(&self) -> Vec<u8> {
+		self.get_moves()
+	}
 	fn get_static_state(&self) -> Self::S {
 		(self.a, self.turn)
 	}

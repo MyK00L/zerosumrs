@@ -11,7 +11,7 @@ impl<G: Game> MinimaxSimple<G> {
 		if self.g.state() != State::Going || depth == 0 {
 			return self.g.heuristic();
 		}
-		let moves = self.g.get_moves();
+		let moves = self.g.get_moves_sorted();
 		let mut res = if self.g.turn() { a } else { b };
 		for m in moves.iter() {
 			self.g.mov(m);
@@ -36,7 +36,7 @@ impl<G: Game> MinimaxSimple<G> {
 		}
 		let mut a = i64::MIN;
 		let mut b = i64::MAX;
-		let moves = self.g.get_moves();
+		let moves = self.g.get_moves_sorted();
 		let mut res = if self.g.turn() { a } else { b };
 		let mut ans = moves[0];
 		for m in moves.iter() {
@@ -71,6 +71,9 @@ impl<G: Game> Ai<G> for MinimaxSimple<G> {
 	fn state(&self) -> State {
 		self.g.state()
 	}
+	fn print2game(&self) {
+		eprintln!("{}", self.g)
+	}
 	fn turn(&self) -> bool {
 		self.g.turn()
 	}
@@ -79,7 +82,7 @@ impl<G: Game> Ai<G> for MinimaxSimple<G> {
 		let mut depth = 1;
 		let mut ans = self.minimax_move(1);
 		loop {
-			if start_time.elapsed().unwrap().as_millis() > 250 {
+			if start_time.elapsed().unwrap().as_millis() > 200 {
 				break;
 			}
 			depth += 1;
