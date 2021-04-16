@@ -32,6 +32,7 @@ mod monte_carlo_tree_search;
 mod othello;
 mod tablut;
 mod tictactoe;
+mod random_agent;
 
 use ai::*;
 use game::*;
@@ -41,6 +42,7 @@ use minimax_simple::*;
 use monte_carlo::*;
 use monte_carlo_total::*;
 use monte_carlo_tree_search::*;
+use random_agent::*;
 use othello::Othello;
 use tablut::Tablut;
 use tictactoe::Ttt;
@@ -121,6 +123,6 @@ fn main() {
 	let mut scan = Scanner::default();
 	let out = &mut BufWriter::new(stdout());
 	print_stats::<Tablut>();
-	let x = compete::<Tablut, MonteCarloTreeSearch<Tablut>, MonteCarloTreeSearch<Tablut>>();
+	let x = compete::<Tablut, MonteCarloTotal<Tablut>, MonteCarloTreeSearch<Tablut>>();
 	write!(out, "{:?}", x);
 }

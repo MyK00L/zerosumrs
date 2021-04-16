@@ -119,28 +119,19 @@ impl<G: Game> Ai<G> for MonteCarloTreeSearch<G> {
 		}
 		self.tree = std::mem::take(&mut t);
 		let mut best_mov = moves[0];
-		let mut best_val = 0.0;
+		let mut best_val = 0;
 		let turn = self.g.turn();
 		for (i, t) in self.tree.children.iter().enumerate() {
-			//let val = (if turn { t.wins } else { t.vis - t.wins }) as f32 / t.vis as f32
-			//	+ 1.6 * ((self.tree.vis as f32).ln() / (t.vis as f32));
-			let val = (if turn { t.wins } else { t.vis - t.wins } + 1) as f32 / (t.vis + 2) as f32;
-			/*eprintln!(
-				"{} / {} -> {}",
-				if turn { t.wins } else { t.vis - t.wins },
-				t.vis,
-				val
-			);*/
+			let val = t.vis;
 			if val > best_val {
 				best_val = val;
 				best_mov = self.tree.movs[i];
 			}
 		}
 		eprintln!(
-			"monte_carlo_tree_search chose move in {} milliseconds with {} iterations | confidence: {}",
+			"monte_carlo_tree_search chose move in {} milliseconds with {} iterations",
 			start_time.elapsed().unwrap().as_millis(),
 			i,
-			best_val,
 		);
 		best_mov
 	}
