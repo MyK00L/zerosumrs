@@ -105,7 +105,9 @@ impl<G: Game> MinimaxHard<G> {
 				break;
 			}
 		}
-		if depth > old_depth /*&& depth > 4*/ {
+		if depth > old_depth
+		/*&& depth > 4*/
+		{
 			self.table.insert(self.g.get_static_state(), (res, depth));
 		}
 		ans

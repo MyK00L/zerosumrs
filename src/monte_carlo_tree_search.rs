@@ -124,13 +124,13 @@ impl<G: Game> Ai<G> for MonteCarloTreeSearch<G> {
 		for (i, t) in self.tree.children.iter().enumerate() {
 			//let val = (if turn { t.wins } else { t.vis - t.wins }) as f32 / t.vis as f32
 			//	+ 1.6 * ((self.tree.vis as f32).ln() / (t.vis as f32));
-			let val = (if turn { t.wins } else { t.vis - t.wins }+1) as f32 / (t.vis+2) as f32;
-			eprintln!(
+			let val = (if turn { t.wins } else { t.vis - t.wins } + 1) as f32 / (t.vis + 2) as f32;
+			/*eprintln!(
 				"{} / {} -> {}",
 				if turn { t.wins } else { t.vis - t.wins },
 				t.vis,
 				val
-			);
+			);*/
 			if val > best_val {
 				best_val = val;
 				best_mov = self.tree.movs[i];

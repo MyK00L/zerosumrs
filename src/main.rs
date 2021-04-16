@@ -30,6 +30,7 @@ mod monte_carlo;
 mod monte_carlo_total;
 mod monte_carlo_tree_search;
 mod othello;
+mod tablut;
 mod tictactoe;
 
 use ai::*;
@@ -41,6 +42,7 @@ use monte_carlo::*;
 use monte_carlo_total::*;
 use monte_carlo_tree_search::*;
 use othello::Othello;
+use tablut::Tablut;
 use tictactoe::Ttt;
 
 fn random_play<G: Game>() -> State {
@@ -106,7 +108,10 @@ fn test_rollback<G: Game>() {
 fn main() {
 	let mut scan = Scanner::default();
 	let out = &mut BufWriter::new(stdout());
-	let x = compete::<Othello, MinimaxHard<Othello>, MinimaxSimple<Othello>>();
+	let x = compete::<Tablut, MonteCarloTreeSearch<Tablut>, MonteCarloTreeSearch<Tablut>>();
 	write!(out, "{:?}", x);
 	//print_balance::<Othello>();
+	//let a = Tablut::new(true);
+	//eprintln!("{}", a);
+	//print_balance::<Tablut>();
 }
