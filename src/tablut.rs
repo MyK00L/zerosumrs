@@ -128,6 +128,17 @@ const BLOCKS: [bool; 81] = [
 	false, false, false, false, false, false, false, false, false, false, false, true, false, false,
 	false, false, false, false, false, true, true, true, false, false, false,
 ];
+const CAPTURE_AID: [bool;81] = [
+	false, false, false, true , false, true , false, false, false,
+	false, false, false, false, true , false, false, false, false,
+	false, false, false, false, false, false, false, false, false,
+	true , false, false, false, false, false, false, false, true ,
+	false, true , false, false, true , false, false, true , false,
+	true , false, false, false, false, false, false, false, true ,
+	false, false, false, false, false, false, false, false, false,
+	false, false, false, false, true , false, false, false, false,
+	false, false, false, true , false , true , false, false, false,
+];
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Tablut {
@@ -143,6 +154,9 @@ fn unmapc(p: u8) -> (u8, u8) {
 }
 fn is_block_um(p: u8) -> bool {
 	BLOCKS[p as usize]
+}
+fn is_capture_aid(p: u8) -> bool {
+	CAPTURE_AID[p as usize]
 }
 impl Tablut {
 	fn get(&self, mut pos: u8) -> Tile {
@@ -175,21 +189,21 @@ impl Tablut {
 	fn captured(&self, a1: u8, a2: u8) -> bool {
 		if self.turn {
 			self.get(a1) == Tile::A
-				&& (self.get(a2) == Tile::D || self.get(a2) == Tile::K || is_block_um(a2))
+				&& (self.get(a2) == Tile::D || self.get(a2) == Tile::K || is_capture_aid(a2))
 		} else {
-			(self.get(a1) == Tile::D && (self.get(a2) == Tile::A || is_block_um(a2)))
+			(self.get(a1) == Tile::D && (self.get(a2) == Tile::A || is_capture_aid(a2)))
 				|| (self.get(a1) == Tile::K
-					&& (self.get(a1 + 9) == Tile::A || is_block_um(a1 + 9))
-					&& (self.get(a1 - 9) == Tile::A || is_block_um(a1 - 9))
-					&& (self.get(a1 + 1) == Tile::A || is_block_um(a1 + 1))
-					&& (self.get(a1 - 1) == Tile::A || is_block_um(a1 - 1)))
+					&& (self.get(a1 + 9) == Tile::A || is_capture_aid(a1 + 9))
+					&& (self.get(a1 - 9) == Tile::A || is_capture_aid(a1 - 9))
+					&& (self.get(a1 + 1) == Tile::A || is_capture_aid(a1 + 1))
+					&& (self.get(a1 - 1) == Tile::A || is_capture_aid(a1 - 1)))
 				|| (self.get(a1) == Tile::K
 					&& a1 != mapc(4, 4)
 					&& a1 != mapc(4, 3)
 					&& a1 != mapc(3, 4)
 					&& a1 != mapc(4, 5)
 					&& a1 != mapc(5, 4)
-					&& (self.get(a2) == Tile::A || is_block_um(a2)))
+					&& (self.get(a2) == Tile::A || is_capture_aid(a2)))
 		}
 	}
 }
@@ -222,7 +236,7 @@ impl Game for Tablut {
 				let p = mapc(x, y);
 				let t = self.get(p);
 				if t == Tile::E {
-					if is_block_um(p) && (last==128 || !is_block_um(last) || last-p>2) {
+					if is_block_um(p) && (last==128 || !is_block_um(last) || p-last>2) {
 						last = 128;
 					} else if last != 128 {
 						ans.push((last, p));
@@ -239,7 +253,7 @@ impl Game for Tablut {
 				let p = mapc(x, y);
 				let t = self.get(p);
 				if t == Tile::E {
-					if is_block_um(p) && (last==128 || !is_block_um(last) || p-last>2) {
+					if is_block_um(p) && (last==128 || !is_block_um(last) || last-p>2) {
 						last = 128;
 					} else if last != 128 {
 						ans.push((last, p));
@@ -256,7 +270,7 @@ impl Game for Tablut {
 				let p = mapc(x, y);
 				let t = self.get(p);
 				if t == Tile::E {
-					if is_block_um(p) && (last==128 || !is_block_um(last) || last-p>2*9) {
+					if is_block_um(p) && (last==128 || !is_block_um(last) || p-last>2*9) {
 						last = 128;
 					} else if last != 128 {
 						ans.push((last, p));
@@ -273,7 +287,7 @@ impl Game for Tablut {
 				let p = mapc(x, y);
 				let t = self.get(p);
 				if t == Tile::E {
-					if is_block_um(p) && (last==128 || !is_block_um(last) || p-last>2*9) {
+					if is_block_um(p) && (last==128 || !is_block_um(last) || last-p>2*9) {
 						last = 128;
 					} else if last != 128 {
 						ans.push((last, p));
@@ -336,7 +350,7 @@ impl Game for Tablut {
 		if m.1 % 9 < 7 && self.captured(m.1 + 1, m.1 + 2) {
 			self.set(m.1 + 1, Tile::E);
 		}
-		if m.1 % 9 > 2 && self.captured(m.1 - 1, m.1 - 2) {
+		if m.1 % 9 >= 2 && self.captured(m.1 - 1, m.1 - 2) {
 			self.set(m.1 - 1, Tile::E);
 		}
 		self.turn = !self.turn;

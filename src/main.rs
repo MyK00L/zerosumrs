@@ -119,10 +119,87 @@ fn test_rollback<G: Game>() {
 	}
 }
 
-fn main() {
+fn scan_cell(scan: &mut Scanner) -> u8 {
+	let s = scan.next::<String>();
+	let mut it = s.chars();
+	let x: u8 = match it.next().unwrap() {
+		'a' => 0,
+		'b' => 1,
+		'c' => 2,
+		'd' => 3,
+		'e' => 4,
+		'f' => 5,
+		'g' => 6,
+		'h' => 7,
+		'i' => 8,
+		_ => panic!(),
+	};
+	let y: u8 = match it.next().unwrap() {
+		'1' => 0,
+		'2' => 1,
+		'3' => 2,
+		'4' => 3,
+		'5' => 4,
+		'6' => 5,
+		'7' => 6,
+		'8' => 7,
+		'9' => 8,
+		_ => panic!(),
+	};
+	y*9+x
+}
+fn scan_mov(scan: &mut Scanner) -> (u8,u8) {
+	let m0 = scan_cell(scan);
+	let m1 = scan_cell(scan);
+	(m0,m1)
+}
+
+fn tablut_test() {
 	let mut scan = Scanner::default();
 	let out = &mut BufWriter::new(stdout());
-	print_stats::<Tablut>();
-	let x = compete::<Tablut, MonteCarloTotal<Tablut>, MonteCarloTreeSearch<Tablut>>();
-	write!(out, "{:?}", x);
+	//print_stats::<Tablut>();
+	//let x = compete::<Tablut, MonteCarloTreeSearch<Tablut>, RandomAgent<Tablut>>();
+	//write!(out, "{:?}", x);
+	let mut g = Tablut::new(true);
+	let mut games_played=0;
+	while games_played!=100 {
+		let n = scan.next::<usize>();
+		if n==0 {
+			if g.state() == State::Going {
+				eprintln!("still going :)");
+			}
+			g = Tablut::new(true);
+			games_played+=1;
+			continue;
+		}
+		let mut mv_his = Vec::<(u8,u8)>::new();
+		let mut mv_mine = g.get_moves();
+		for j in 0..n {
+			let m = scan_mov(&mut scan);
+			mv_his.push(m);
+		}
+		mv_his.sort();
+		mv_mine.sort();
+		//eprintln!("{}",g);
+		for i in 0..n {
+			if n != mv_mine.len() || mv_his[i]!=mv_mine[i] {
+				eprintln!("moves differ");
+				eprintln!("his: {:?}", mv_his);
+				eprintln!("mine: {:?}", mv_mine);
+				eprintln!("{}",g);
+				panic!();
+			}
+		}
+		let m = scan_mov(&mut scan);
+		g.mov(&m);
+		if games_played==99 {
+			eprintln!("{}",g);
+		}
+		//eprintln!("iter {}", games_played);
+	}
 }
+
+fn main() {
+	tablut_test();
+}
+
