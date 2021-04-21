@@ -332,21 +332,30 @@ impl Game for Tablut {
 						na += 1;
 					}
 				}
-				for i in self.get_moves() {
-					match self.get(i.0) {
-						Tile::D => {
-							md += 1;
+				let mut gc = Tablut {
+					board: self.board,
+					turn: self.turn,
+					st: vec![],
+					state: State::Going,
+				};
+				for _ in 0..2 {
+					for i in gc.get_moves() {
+						match gc.get(i.0) {
+							Tile::D => {
+								md += 1;
+							}
+							Tile::K => {
+								mk += 1;
+							}
+							Tile::A => {
+								ma += 1;
+							}
+							_ => {}
 						}
-						Tile::K => {
-							mk += 1;
-						}
-						Tile::A => {
-							ma += 1;
-						}
-						_ => {}
 					}
+					gc.turn ^= 1;
 				}
-				na * 16 - nd * 8 + 2 * md + 4 * mk - ma
+				nd * 6 - na * 3 - ma + 2 * md + 4 * mk
 			}
 		}
 	}
@@ -388,7 +397,7 @@ impl Game for Tablut {
 				false => State::Lose,
 			}
 		}
-		self.turn+=1;
+		self.turn += 1;
 	}
 	fn rollback(&mut self) {
 		self.turn -= 1;
