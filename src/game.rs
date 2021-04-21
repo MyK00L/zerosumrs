@@ -10,8 +10,8 @@ pub enum State {
 	Going,
 }
 pub trait Game: Clone + Debug + Display {
-	type M: Copy + PartialEq + Eq;
-	type S: Hash + Copy + Eq;
+	type M: Copy + PartialEq + Eq + Debug;
+	type S: Hash + Copy + Eq + Debug;
 	fn new(t: bool) -> Self;
 	fn turn(&self) -> bool;
 	fn get_moves(&self) -> Vec<Self::M>;

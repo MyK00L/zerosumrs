@@ -20,18 +20,18 @@ impl<G: Game> MonteCarlo<G> {
 			let m = moves.choose(&mut self.rng).unwrap();
 			gc.mov(&m);
 		}
-		let mut ans = match gc.state() {
+		match gc.state() {
 			State::Win => 1u32,
 			State::Lose => 0u32,
 			_ => self.rng.next_u32() & 1,
-		};
-		ans
+		}
 	}
 	fn step(&mut self) -> bool {
 		let mut nm0 = 0;
-		if !self.table.contains_key(&self.g.get_static_state()) {
-			self.table.insert(self.g.get_static_state(), (0, 0));
-		}
+		self
+			.table
+			.entry(self.g.get_static_state())
+			.or_insert((0, 0));
 		loop {
 			if self.g.state() != State::Going {
 				for _ in 0..nm0 {
@@ -76,7 +76,7 @@ impl<G: Game> MonteCarlo<G> {
 			x.0 += mc;
 			x.1 += 1;
 		}
-		return true;
+		true
 	}
 }
 

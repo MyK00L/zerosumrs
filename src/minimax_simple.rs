@@ -82,7 +82,7 @@ impl<G: Game> Ai<G> for MinimaxSimple<G> {
 		let mut depth = 1;
 		let mut ans = self.minimax_move(1);
 		loop {
-			if start_time.elapsed().unwrap().as_millis() > 200 {
+			if start_time.elapsed().unwrap().as_millis() * 10 > 500 {
 				break;
 			}
 			depth += 1;

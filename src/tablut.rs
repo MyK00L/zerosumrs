@@ -7,8 +7,8 @@ enum Tile {
 	D, // Defender=2
 	K, // King=3
 }
-impl From<u64> for Tile {
-	fn from(x: u64) -> Self {
+impl From<u8> for Tile {
+	fn from(x: u8) -> Self {
 		match x & 3 {
 			1 => Tile::A,
 			2 => Tile::D,
@@ -120,6 +120,14 @@ const STARTING_POSITION: [[Tile; 9]; 9] = [
 	],
 ];
 
+const GOAL: [bool; 81] = [
+	false, true, true, false, false, false, true, true, false, true, false, false, false, false,
+	false, false, false, true, true, false, false, false, false, false, false, false, true, false,
+	false, false, false, false, false, false, false, false, false, false, false, false, false, false,
+	false, false, false, false, false, false, false, false, false, false, false, false, true, false,
+	false, false, false, false, false, false, true, true, false, false, false, false, false, false,
+	false, true, false, true, true, false, false, false, true, true, false,
+];
 const BLOCKS: [bool; 81] = [
 	false, false, false, true, true, true, false, false, false, false, false, false, false, true,
 	false, false, false, false, false, false, false, false, false, false, false, false, false, true,
@@ -128,23 +136,21 @@ const BLOCKS: [bool; 81] = [
 	false, false, false, false, false, false, false, false, false, false, false, true, false, false,
 	false, false, false, false, false, true, true, true, false, false, false,
 ];
-const CAPTURE_AID: [bool;81] = [
-	false, false, false, true , false, true , false, false, false,
-	false, false, false, false, true , false, false, false, false,
-	false, false, false, false, false, false, false, false, false,
-	true , false, false, false, false, false, false, false, true ,
-	false, true , false, false, true , false, false, true , false,
-	true , false, false, false, false, false, false, false, true ,
-	false, false, false, false, false, false, false, false, false,
-	false, false, false, false, true , false, false, false, false,
-	false, false, false, true , false , true , false, false, false,
+const CAPTURE_AID: [bool; 81] = [
+	false, false, false, true, false, true, false, false, false, false, false, false, false, true,
+	false, false, false, false, false, false, false, false, false, false, false, false, false, true,
+	false, false, false, false, false, false, false, true, false, true, false, false, true, false,
+	false, true, false, true, false, false, false, false, false, false, false, true, false, false,
+	false, false, false, false, false, false, false, false, false, false, false, true, false, false,
+	false, false, false, false, false, true, false, true, false, false, false,
 ];
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Tablut {
-	a: (u64, u64, u64),
-	turn: bool,
-	st: Vec<(u64, u64, u64)>, // whole state
+	board: [u8; 21],
+	turn: u32,         //%2=0 defender, %2=1 attacker
+	st: Vec<[u8; 21]>, // just save the whole state
+	state: State,
 }
 fn mapc(x: u8, y: u8) -> u8 {
 	y * 9 + x
@@ -159,35 +165,15 @@ fn is_capture_aid(p: u8) -> bool {
 	CAPTURE_AID[p as usize]
 }
 impl Tablut {
-	fn get(&self, mut pos: u8) -> Tile {
-		pos <<= 1;
-		if pos >= 128 {
-			pos -= 128;
-			(self.a.2 >> pos).into()
-		} else if pos >= 64 {
-			pos -= 64;
-			(self.a.1 >> pos).into()
-		} else {
-			(self.a.0 >> pos).into()
-		}
+	fn get(&self, pos: u8) -> Tile {
+		((self.board[(pos >> 2) as usize] >> (pos & 3) >> (pos & 3)) & 3).into()
 	}
-	fn set(&mut self, mut pos: u8, v: Tile) {
-		pos <<= 1;
-		if pos >= 128 {
-			pos -= 128;
-			self.a.2 &= !(3 << pos);
-			self.a.2 |= (v as u64) << pos;
-		} else if pos >= 64 {
-			pos -= 64;
-			self.a.1 &= !(3 << pos);
-			self.a.1 |= (v as u64) << pos;
-		} else {
-			self.a.0 &= !(3 << pos);
-			self.a.0 |= (v as u64) << pos;
-		}
+	fn set(&mut self, pos: u8, v: Tile) {
+		self.board[(pos >> 2) as usize] &= !(3 << (pos & 3) << (pos & 3));
+		self.board[(pos >> 2) as usize] |= (v as u8) << (pos & 3) << (pos & 3);
 	}
 	fn captured(&self, a1: u8, a2: u8) -> bool {
-		if self.turn {
+		if self.turn() {
 			self.get(a1) == Tile::A
 				&& (self.get(a2) == Tile::D || self.get(a2) == Tile::K || is_capture_aid(a2))
 		} else {
@@ -209,12 +195,13 @@ impl Tablut {
 }
 impl Game for Tablut {
 	type M = (u8, u8); // compressed coords from and to (4bits x, 4bits y)
-	type S = ((u64, u64, u64), bool);
+	type S = ([u8; 21], bool);
 	fn new(t: bool) -> Self {
 		let mut ans = Tablut {
-			a: (0, 0, 0),
-			turn: t,
+			board: <[u8; 21]>::default(),
+			turn: if t { 0 } else { 1 },
 			st: vec![],
+			state: State::Going,
 		};
 		for y in 0..9 {
 			for x in 0..9 {
@@ -224,7 +211,7 @@ impl Game for Tablut {
 		ans
 	}
 	fn turn(&self) -> bool {
-		self.turn
+		(self.turn & 1) == 0
 	}
 	fn get_moves(&self) -> Vec<Self::M> {
 		let mut ans = Vec::<Self::M>::new();
@@ -236,13 +223,17 @@ impl Game for Tablut {
 				let p = mapc(x, y);
 				let t = self.get(p);
 				if t == Tile::E {
-					if is_block_um(p) && (last==128 || !is_block_um(last) || p-last>2) {
+					if is_block_um(p) && (last == 128 || !is_block_um(last) || p - last > 2) {
 						last = 128;
 					} else if last != 128 {
 						ans.push((last, p));
 					}
 				} else {
-					last = if self.turn == (t != Tile::A) { p } else { 128 }
+					last = if self.turn() == (t != Tile::A) {
+						p
+					} else {
+						128
+					}
 				}
 			}
 		}
@@ -253,13 +244,17 @@ impl Game for Tablut {
 				let p = mapc(x, y);
 				let t = self.get(p);
 				if t == Tile::E {
-					if is_block_um(p) && (last==128 || !is_block_um(last) || last-p>2) {
+					if is_block_um(p) && (last == 128 || !is_block_um(last) || last - p > 2) {
 						last = 128;
 					} else if last != 128 {
 						ans.push((last, p));
 					}
 				} else {
-					last = if self.turn == (t != Tile::A) { p } else { 128 }
+					last = if self.turn() == (t != Tile::A) {
+						p
+					} else {
+						128
+					}
 				}
 			}
 		}
@@ -270,13 +265,17 @@ impl Game for Tablut {
 				let p = mapc(x, y);
 				let t = self.get(p);
 				if t == Tile::E {
-					if is_block_um(p) && (last==128 || !is_block_um(last) || p-last>2*9) {
+					if is_block_um(p) && (last == 128 || !is_block_um(last) || p - last > 2 * 9) {
 						last = 128;
 					} else if last != 128 {
 						ans.push((last, p));
 					}
 				} else {
-					last = if self.turn == (t != Tile::A) { p } else { 128 }
+					last = if self.turn() == (t != Tile::A) {
+						p
+					} else {
+						128
+					}
 				}
 			}
 		}
@@ -287,13 +286,17 @@ impl Game for Tablut {
 				let p = mapc(x, y);
 				let t = self.get(p);
 				if t == Tile::E {
-					if is_block_um(p) && (last==128 || !is_block_um(last) || last-p>2*9) {
+					if is_block_um(p) && (last == 128 || !is_block_um(last) || last - p > 2 * 9) {
 						last = 128;
 					} else if last != 128 {
 						ans.push((last, p));
 					}
 				} else {
-					last = if self.turn == (t != Tile::A) { p } else { 128 }
+					last = if self.turn() == (t != Tile::A) {
+						p
+					} else {
+						128
+					}
 				}
 			}
 		}
@@ -304,60 +307,87 @@ impl Game for Tablut {
 		self.get_moves() // to implement?
 	}
 	fn get_static_state(&self) -> Self::S {
-		(self.a, self.turn)
+		(self.board, self.turn())
 	}
 	fn state(&self) -> State {
-		const WINS: [u8; 4] = [0, 1, 5, 7];
-		for i in WINS.iter() {
-			if self.get(mapc(*i, 0)) == Tile::K
-				|| self.get(mapc(*i, 8)) == Tile::K
-				|| self.get(mapc(0, *i)) == Tile::K
-				|| self.get(mapc(8, *i)) == Tile::K
-			{
-				return State::Win;
-			}
-		}
-		if self.get_moves().is_empty() {
-			return if self.turn {
-				State::Lose
-			} else {
-				State::Win
-			};
-		}
-		for y in 1..8 {
-			for x in 1..8 {
-				if self.get(mapc(y, x)) == Tile::K {
-					return State::Going;
-				}
-			}
-		}
-		return State::Lose;
+		self.state
 	}
 	fn heuristic(&self) -> i64 {
-		unimplemented!();
+		match self.state() {
+			State::Win => 32768 - (self.turn as i64),
+			State::Lose => -32768 + (self.turn as i64),
+			State::Draw => 0,
+			State::Going => {
+				let mut nd = 0;
+				let mut md = 0;
+				let mut na = 0;
+				let mut ma = 0;
+				let mut mk = 0;
+				for i in 0..81 {
+					let t = self.get(i);
+					if t == Tile::D {
+						nd += 1;
+					}
+					if t == Tile::A {
+						na += 1;
+					}
+				}
+				for i in self.get_moves() {
+					match self.get(i.0) {
+						Tile::D => {
+							md += 1;
+						}
+						Tile::K => {
+							mk += 1;
+						}
+						Tile::A => {
+							ma += 1;
+						}
+						_ => {}
+					}
+				}
+				na * 16 - nd * 8 + 2 * md + 4 * mk - ma
+			}
+		}
 	}
 	fn mov(&mut self, m: &Self::M) {
-		self.st.push(self.a);
+		self.st.push(self.board);
 		let x = self.get(m.0);
 		self.set(m.0, Tile::E);
 		self.set(m.1, x);
 		if m.1 + 18 < 81 && self.captured(m.1 + 9, m.1 + 18) {
+			if self.get(m.1 + 9) == Tile::K {
+				self.state = State::Lose;
+			}
 			self.set(m.1 + 9, Tile::E);
 		}
 		if m.1 >= 18 && self.captured(m.1 - 9, m.1 - 18) {
+			if self.get(m.1 - 9) == Tile::K {
+				self.state = State::Lose;
+			}
 			self.set(m.1 - 9, Tile::E);
 		}
 		if m.1 % 9 < 7 && self.captured(m.1 + 1, m.1 + 2) {
+			if self.get(m.1 + 1) == Tile::K {
+				self.state = State::Lose;
+			}
 			self.set(m.1 + 1, Tile::E);
 		}
 		if m.1 % 9 >= 2 && self.captured(m.1 - 1, m.1 - 2) {
+			if self.get(m.1 - 1) == Tile::K {
+				self.state = State::Lose;
+			}
 			self.set(m.1 - 1, Tile::E);
+		}
+		if GOAL[m.1 as usize] && self.get(m.1) == Tile::K {
+			self.state = State::Win;
 		}
 		self.turn = !self.turn;
 	}
 	fn rollback(&mut self) {
-		self.turn = !self.turn;
-		self.a = self.st.pop().unwrap();
+		self.turn -= 1;
+		self.state = State::Going;
+		self.board = self.st.pop().unwrap();
 	}
 }
 impl std::fmt::Display for Tablut {

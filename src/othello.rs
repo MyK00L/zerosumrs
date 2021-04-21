@@ -46,7 +46,7 @@ impl Othello {
 		pos.1 += dir.1;
 		let mut found = false;
 		while pos.0 < 8 && pos.1 < 8 && pos.0 >= 0 && pos.1 >= 0 {
-			if self.has_piece(mapc(pos.0 as u8, pos.1 as u8)) == false {
+			if !self.has_piece(mapc(pos.0 as u8, pos.1 as u8)) {
 				return false;
 			} else if self.get_piece(mapc(pos.0 as u8, pos.1 as u8)) == t {
 				return found;
@@ -56,7 +56,7 @@ impl Othello {
 			pos.0 += dir.0;
 			pos.1 += dir.1;
 		}
-		return false;
+		false
 	}
 	// assumes reversable
 	fn reverse(&mut self, t: bool, mut pos: (i8, i8), dir: (i8, i8)) -> Vec<u8> {
@@ -101,8 +101,8 @@ impl Game for Othello {
 		for y in 0..8 {
 			for x in 0..8 {
 				if !self.has_piece(mapc(x, y)) {
-					for di in 0..8 {
-						if self.reversable(self.turn, (x as i8, y as i8), DIRS[di]) {
+					for dir in DIRS.iter() {
+						if self.reversable(self.turn, (x as i8, y as i8), *dir) {
 							ans.push(mapc(x, y));
 							break;
 						}
@@ -131,12 +131,10 @@ impl Game for Othello {
 		{
 			State::Going
 		} else {
-			if self.board.1.count_ones() > 32 {
-				State::Win
-			} else if self.board.1.count_ones() < 32 {
-				State::Lose
-			} else {
-				State::Draw
+			match self.board.1.count_ones() {
+				0..=31 => State::Lose,
+				32 => State::Draw,
+				_ => State::Win,
 			}
 		}
 	}
@@ -166,11 +164,11 @@ impl Game for Othello {
 		let mut ste = (*m, Vec::<u8>::new());
 		if *m != 64 {
 			let (x, y) = unmapc(*m);
-			for di in 0..8 {
-				if self.reversable(self.turn, (x as i8, y as i8), DIRS[di]) {
+			for dir in DIRS.iter() {
+				if self.reversable(self.turn, (x as i8, y as i8), *dir) {
 					ste
 						.1
-						.extend(self.reverse(self.turn, (x as i8, y as i8), DIRS[di]));
+						.extend(self.reverse(self.turn, (x as i8, y as i8), *dir));
 				}
 			}
 			self.add_piece(*m, self.turn);

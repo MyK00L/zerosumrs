@@ -30,9 +30,9 @@ mod monte_carlo;
 mod monte_carlo_total;
 mod monte_carlo_tree_search;
 mod othello;
+mod random_agent;
 mod tablut;
 mod tictactoe;
-mod random_agent;
 
 use ai::*;
 use game::*;
@@ -42,8 +42,8 @@ use minimax_simple::*;
 use monte_carlo::*;
 use monte_carlo_total::*;
 use monte_carlo_tree_search::*;
-use random_agent::*;
 use othello::Othello;
+use random_agent::*;
 use tablut::Tablut;
 use tictactoe::Ttt;
 
@@ -146,60 +146,57 @@ fn scan_cell(scan: &mut Scanner) -> u8 {
 		'9' => 8,
 		_ => panic!(),
 	};
-	y*9+x
+	y * 9 + x
 }
-fn scan_mov(scan: &mut Scanner) -> (u8,u8) {
+fn scan_mov(scan: &mut Scanner) -> (u8, u8) {
 	let m0 = scan_cell(scan);
 	let m1 = scan_cell(scan);
-	(m0,m1)
+	(m0, m1)
 }
 
 fn tablut_test() {
 	let mut scan = Scanner::default();
-	let out = &mut BufWriter::new(stdout());
-	//print_stats::<Tablut>();
-	//let x = compete::<Tablut, MonteCarloTreeSearch<Tablut>, RandomAgent<Tablut>>();
-	//write!(out, "{:?}", x);
 	let mut g = Tablut::new(true);
-	let mut games_played=0;
-	while games_played!=100 {
+	let mut games_played = 0;
+	let mut move_count = 0;
+	let mut h = std::collections::HashSet::<<Tablut as Game>::S>::new();
+	while games_played != 1000 {
 		let n = scan.next::<usize>();
-		if n==0 {
+		if n == 0 {
 			if g.state() == State::Going {
 				eprintln!("still going :)");
 			}
+			move_count = 0;
 			g = Tablut::new(true);
-			games_played+=1;
+			games_played += 1;
 			continue;
 		}
-		let mut mv_his = Vec::<(u8,u8)>::new();
+		move_count += 1;
+		let mut mv_his = Vec::<(u8, u8)>::new();
 		let mut mv_mine = g.get_moves();
 		for j in 0..n {
 			let m = scan_mov(&mut scan);
 			mv_his.push(m);
 		}
-		mv_his.sort();
-		mv_mine.sort();
-		//eprintln!("{}",g);
+		mv_his.sort_unstable();
+		mv_mine.sort_unstable();
 		for i in 0..n {
-			if n != mv_mine.len() || mv_his[i]!=mv_mine[i] {
+			if n != mv_mine.len() || mv_his[i] != mv_mine[i] {
 				eprintln!("moves differ");
 				eprintln!("his: {:?}", mv_his);
 				eprintln!("mine: {:?}", mv_mine);
-				eprintln!("{}",g);
+				eprintln!("{}", g);
 				panic!();
 			}
 		}
 		let m = scan_mov(&mut scan);
 		g.mov(&m);
-		if games_played==99 {
-			eprintln!("{}",g);
-		}
 		//eprintln!("iter {}", games_played);
 	}
 }
 
 fn main() {
-	tablut_test();
+	let x = compete::<Tablut, MinimaxSimple<Tablut>, MinimaxSimple<Tablut>>();
+	eprintln!("{:?}", x);
+	//tablut_test();
 }
-

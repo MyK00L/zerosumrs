@@ -82,7 +82,7 @@ impl<G: Game> MonteCarloTreeSearch<G> {
 		self.g.rollback();
 		t.wins += x;
 		t.vis += 1;
-		return x;
+		x
 	}
 }
 
@@ -113,14 +113,14 @@ impl<G: Game> Ai<G> for MonteCarloTreeSearch<G> {
 				self.step(&mut t);
 			}
 			i += 128;
-			if start_time.elapsed().unwrap().as_millis() > 250 {
+			if start_time.elapsed().unwrap().as_millis() > 500 {
 				break;
 			}
 		}
 		self.tree = std::mem::take(&mut t);
 		let mut best_mov = moves[0];
 		let mut best_val = 0;
-		let turn = self.g.turn();
+		//let turn = self.g.turn();
 		for (i, t) in self.tree.children.iter().enumerate() {
 			let val = t.vis;
 			if val > best_val {
