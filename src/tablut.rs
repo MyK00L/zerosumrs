@@ -382,7 +382,13 @@ impl Game for Tablut {
 		if GOAL[m.1 as usize] && self.get(m.1) == Tile::K {
 			self.state = State::Win;
 		}
-		self.turn = !self.turn;
+		if self.get_moves().is_empty() {
+			self.state = match self.turn() {
+				true => State::Win,
+				false => State::Lose,
+			}
+		}
+		self.turn+=1;
 	}
 	fn rollback(&mut self) {
 		self.turn -= 1;
