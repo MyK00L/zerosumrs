@@ -23,13 +23,13 @@ impl<G: Game> MinimaxHard<G> {
 		let mut res = if self.g.turn() { a } else { b };
 		let mut moves = self.g.get_moves();
 		moves.sort_by_cached_key(|m| {
-			self.g.mov(m);
+			let rb = self.g.mov_with_rollback(m);
 			let ans = self
 				.table
 				.get(&self.g.get_static_state())
 				.unwrap_or(&(res, 0))
 				.0;
-			self.g.rollback();
+			self.g.rollback(rb);
 			if self.g.turn() {
 				-ans
 			} else {
@@ -37,9 +37,9 @@ impl<G: Game> MinimaxHard<G> {
 			}
 		});
 		for m in moves.iter() {
-			self.g.mov(m);
+			let rb = self.g.mov_with_rollback(m);
 			let h = self.minimax(a, b, depth - 1);
-			self.g.rollback();
+			self.g.rollback(rb);
 			if self.g.turn() {
 				res = res.max(h);
 				a = a.max(h);
@@ -71,13 +71,13 @@ impl<G: Game> MinimaxHard<G> {
 		let mut moves = self.g.get_moves();
 		let mut ans = moves[0];
 		moves.sort_by_cached_key(|m| {
-			self.g.mov(m);
+			let rb = self.g.mov_with_rollback(m);
 			let ans = self
 				.table
 				.get(&self.g.get_static_state())
 				.unwrap_or(&(res, 0))
 				.0;
-			self.g.rollback();
+			self.g.rollback(rb);
 			if self.g.turn() {
 				-ans
 			} else {
@@ -85,9 +85,9 @@ impl<G: Game> MinimaxHard<G> {
 			}
 		});
 		for m in moves.iter() {
-			self.g.mov(m);
+			let rb = self.g.mov_with_rollback(m);
 			let h = self.minimax(a, b, depth - 1);
-			self.g.rollback();
+			self.g.rollback(rb);
 			if self.g.turn() {
 				if h > res {
 					res = h;

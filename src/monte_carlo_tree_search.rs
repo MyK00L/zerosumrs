@@ -42,13 +42,12 @@ impl<G: Game> MonteCarloTreeSearch<G> {
 		}
 	}
 	fn explore_branch(&mut self) -> u32 {
-		let mut gc = self.g.clone();
-		while gc.state() == State::Going {
-			let moves = gc.get_moves();
+		while self.g.state() == State::Going {
+			let moves = self.g.get_moves();
 			let m = moves.choose(&mut self.rng).unwrap();
-			gc.mov(&m);
+			self.g.mov(&m);
 		}
-		self.result_u32(gc.state())
+		self.result_u32(self.g.state())
 	}
 	fn step(&mut self, t: &mut Tree<G>) -> u32 {
 		let turn = self.g.turn();
@@ -79,7 +78,6 @@ impl<G: Game> MonteCarloTreeSearch<G> {
 		};
 		self.g.mov(&t.movs[movi]);
 		let x = self.step(&mut t.children[movi]);
-		self.g.rollback();
 		t.wins += x;
 		t.vis += 1;
 		x
@@ -108,9 +106,11 @@ impl<G: Game> Ai<G> for MonteCarloTreeSearch<G> {
 		let moves = self.g.get_moves();
 		let mut i = 0;
 		let mut t = std::mem::take(&mut self.tree);
+		let g0 = self.g;
 		loop {
 			for _ in 0..128 {
 				self.step(&mut t);
+				self.g = g0;
 			}
 			i += 128;
 			if start_time.elapsed().unwrap().as_millis() > 500 {

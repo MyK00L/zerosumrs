@@ -9,9 +9,10 @@ pub enum State {
 	Draw,
 	Going,
 }
-pub trait Game: Clone + Debug + Display {
+pub trait Game: Clone + Copy + Debug + Display {
 	type M: Copy + PartialEq + Eq + Debug;
-	type S: Hash + Copy + Eq + Debug;
+	type S: Hash + Copy + PartialEq + Eq + Debug;
+	type R: Copy + Debug + Default;
 	fn new(t: bool) -> Self;
 	fn turn(&self) -> bool;
 	fn get_moves(&self) -> Vec<Self::M>;
@@ -20,5 +21,6 @@ pub trait Game: Clone + Debug + Display {
 	fn state(&self) -> State;
 	fn heuristic(&self) -> i64;
 	fn mov(&mut self, m: &Self::M);
-	fn rollback(&mut self);
+	fn mov_with_rollback(&mut self, m: &Self::M) -> Self::R;
+	fn rollback(&mut self, rb: Self::R);
 }

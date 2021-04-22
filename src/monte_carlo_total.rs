@@ -12,14 +12,13 @@ pub struct MonteCarloTotal<G: Game> {
 
 impl<G: Game> MonteCarloTotal<G> {
 	fn explore_branch(&mut self, m0: &G::M, turn: bool) -> u32 {
-		let mut gc = self.g.clone();
-		gc.mov(&m0);
-		while gc.state() == State::Going {
-			let moves = gc.get_moves();
+		self.g.mov(&m0);
+		while self.g.state() == State::Going {
+			let moves = self.g.get_moves();
 			let m = moves.choose(&mut self.rng).unwrap();
-			gc.mov(&m);
+			self.g.mov(&m);
 		}
-		let mut ans = match gc.state() {
+		let mut ans = match self.g.state() {
 			State::Win => 1,
 			State::Lose => 0,
 			_ => self.rng.next_u32() % 2,
@@ -53,6 +52,7 @@ impl<G: Game> Ai<G> for MonteCarloTotal<G> {
 		let turn = self.g.turn();
 		let mut v = vec![0u32; moves.len()];
 		let mut i = 0;
+		let g0 = self.g;
 		loop {
 			if start_time.elapsed().unwrap().as_millis() > 250 {
 				break;
@@ -60,6 +60,7 @@ impl<G: Game> Ai<G> for MonteCarloTotal<G> {
 			i += 1;
 			for mm in moves.iter().enumerate() {
 				v[mm.0] += self.explore_branch(mm.1, turn);
+				self.g = g0;
 			}
 		}
 		let best_ind = v.iter().enumerate().max_by_key(|x| x.1).unwrap().0;

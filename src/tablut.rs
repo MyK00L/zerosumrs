@@ -145,11 +145,10 @@ const CAPTURE_AID: [bool; 81] = [
 	false, false, false, false, false, true, false, true, false, false, false,
 ];
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct Tablut {
 	board: [u8; 21],
-	turn: u32,         //%2=0 defender, %2=1 attacker
-	st: Vec<[u8; 21]>, // just save the whole state
+	turn: u32, //%2=0 defender, %2=1 attacker
 	state: State,
 }
 fn mapc(x: u8, y: u8) -> u8 {
@@ -196,11 +195,11 @@ impl Tablut {
 impl Game for Tablut {
 	type M = (u8, u8); // compressed coords from and to (4bits x, 4bits y)
 	type S = ([u8; 21], bool);
+	type R = (Self::M, u8); // first: coords, second: ruld tiles
 	fn new(t: bool) -> Self {
 		let mut ans = Tablut {
 			board: <[u8; 21]>::default(),
 			turn: if t { 0 } else { 1 },
-			st: vec![],
 			state: State::Going,
 		};
 		for y in 0..9 {
@@ -335,7 +334,6 @@ impl Game for Tablut {
 				let mut gc = Tablut {
 					board: self.board,
 					turn: self.turn,
-					st: vec![],
 					state: State::Going,
 				};
 				for _ in 0..2 {
@@ -360,7 +358,6 @@ impl Game for Tablut {
 		}
 	}
 	fn mov(&mut self, m: &Self::M) {
-		self.st.push(self.board);
 		let x = self.get(m.0);
 		self.set(m.0, Tile::E);
 		self.set(m.1, x);
@@ -391,18 +388,49 @@ impl Game for Tablut {
 		if GOAL[m.1 as usize] && self.get(m.1) == Tile::K {
 			self.state = State::Win;
 		}
+		self.turn += 1;
 		if self.get_moves().is_empty() {
 			self.state = match self.turn() {
 				true => State::Win,
 				false => State::Lose,
 			}
 		}
-		self.turn += 1;
 	}
-	fn rollback(&mut self) {
+	fn mov_with_rollback(&mut self, m: &Self::M) -> Self::R {
+		let mut rb = (*m, 0u8);
+		if m.1 + 9 < 81 {
+			rb.1 |= self.get(m.1 + 9) as u8;
+		}
+		if m.1 >= 9 {
+			rb.1 |= (self.get(m.1 - 9) as u8) << 2;
+		}
+		if m.1 + 1 < 81 {
+			rb.1 |= (self.get(m.1 + 1) as u8) << 4;
+		}
+		if m.1 >= 1 {
+			rb.1 |= (self.get(m.1 - 1) as u8) << 6;
+		}
+		self.mov(m);
+		rb
+	}
+	fn rollback(&mut self, rbf: Self::R) {
 		self.turn -= 1;
 		self.state = State::Going;
-		self.board = self.st.pop().unwrap();
+		let (m, rb) = rbf;
+		if m.1 + 9 < 81 {
+			self.set(m.1 + 9, rb.into());
+		}
+		if m.1 >= 9 {
+			self.set(m.1 - 9, (rb >> 2).into());
+		}
+		if m.1 + 1 < 81 {
+			self.set(m.1 + 1, (rb >> 4).into());
+		}
+		if m.1 >= 1 {
+			self.set(m.1 - 1, (rb >> 6).into());
+		}
+		self.set(m.0, self.get(m.1));
+		self.set(m.1, Tile::E);
 	}
 }
 impl std::fmt::Display for Tablut {

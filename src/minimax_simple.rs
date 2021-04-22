@@ -14,9 +14,9 @@ impl<G: Game> MinimaxSimple<G> {
 		let moves = self.g.get_moves_sorted();
 		let mut res = if self.g.turn() { a } else { b };
 		for m in moves.iter() {
-			self.g.mov(m);
+			let rb = self.g.mov_with_rollback(m);
 			let h = self.minimax(a, b, depth - 1);
-			self.g.rollback();
+			self.g.rollback(rb);
 			if self.g.turn() {
 				res = res.max(h);
 				a = a.max(h);
@@ -40,9 +40,9 @@ impl<G: Game> MinimaxSimple<G> {
 		let mut res = if self.g.turn() { a } else { b };
 		let mut ans = moves[0];
 		for m in moves.iter() {
-			self.g.mov(m);
+			let rb = self.g.mov_with_rollback(m);
 			let h = self.minimax(a, b, depth - 1);
-			self.g.rollback();
+			self.g.rollback(rb);
 			if self.g.turn() {
 				if h > res {
 					res = h;

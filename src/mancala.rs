@@ -1,21 +1,20 @@
 use crate::game::*;
 use std::cmp::Ordering;
 
-#[derive(Debug, Hash, Clone, PartialEq, Eq)]
+#[derive(Debug, Hash, Clone, Copy, PartialEq, Eq)]
 pub struct Mancala {
 	a: [u8; 14],
 	turn: bool,
-	st: Vec<(u8, u8, bool)>,
 }
 
 impl Game for Mancala {
 	type M = u8;
 	type S = ([u8; 14], bool);
+	type R = (u8, u8, bool);
 	fn new(t: bool) -> Self {
 		Mancala {
 			a: [4, 4, 4, 4, 4, 4, 0, 4, 4, 4, 4, 4, 4, 0],
 			turn: t,
-			st: vec![],
 		}
 	}
 	fn turn(&self) -> bool {
@@ -83,6 +82,27 @@ impl Game for Mancala {
 		(self.a, self.turn)
 	}
 	fn mov(&mut self, m: &u8) {
+		let mut i = *m as usize;
+		let mut x = self.a[i];
+		self.a[i] = 0;
+		while x != 0 {
+			i = (i + 1) % 14;
+			if (i == 13 && self.turn) || (i == 6 && !self.turn) {
+				continue;
+			}
+			self.a[i] += 1;
+			x -= 1;
+		}
+		if self.a[i] == 1 && ((self.turn && i < 6) || (!self.turn && i > 6 && i < 13)) {
+			let o = 12 - i;
+			self.a[i] += self.a[o];
+			self.a[o] = 0;
+		}
+		if !((i == 6 && self.turn) || (i == 13 && !self.turn)) {
+			self.turn = !self.turn;
+		}
+	}
+	fn mov_with_rollback(&mut self, m: &u8) -> Self::R {
 		let mut rb: (u8, u8, bool) = (*m, self.a[*m as usize], false);
 		let mut i = *m as usize;
 		let mut x = self.a[i];
@@ -104,10 +124,9 @@ impl Game for Mancala {
 		if !((i == 6 && self.turn) || (i == 13 && !self.turn)) {
 			self.turn = !self.turn;
 		}
-		self.st.push(rb);
+		rb
 	}
-	fn rollback(&mut self) {
-		let rb = self.st.pop().unwrap();
+	fn rollback(&mut self, rb: Self::R) {
 		let mut i = rb.0 as usize;
 		let mut x = rb.1;
 		self.turn = i < 6;

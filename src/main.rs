@@ -26,7 +26,6 @@ mod game;
 mod mancala;
 mod minimax_hard;
 mod minimax_simple;
-mod monte_carlo;
 mod monte_carlo_total;
 mod monte_carlo_tree_search;
 mod othello;
@@ -36,16 +35,15 @@ mod tictactoe;
 
 use ai::*;
 use game::*;
-use mancala::Mancala;
+use mancala::*;
 use minimax_hard::*;
 use minimax_simple::*;
-use monte_carlo::*;
 use monte_carlo_total::*;
 use monte_carlo_tree_search::*;
-use othello::Othello;
+use othello::*;
 use random_agent::*;
-use tablut::Tablut;
-use tictactoe::Ttt;
+use tablut::*;
+use tictactoe::*;
 
 fn random_play<G: Game>() -> (State, usize) {
 	let mut rng = Xoroshiro128Plus::from_rng(rand::thread_rng()).unwrap();
@@ -97,23 +95,23 @@ fn print_stats<G: Game>() {
 fn test_rollback<G: Game>() {
 	let mut rng = Xoroshiro128Plus::from_rng(rand::thread_rng()).unwrap();
 	let mut g = G::new(true);
-	let mut v = vec![g.clone()];
+	let mut v = vec![(g.clone(), G::R::default())];
 	while g.state() == State::Going {
 		let moves = g.get_moves();
 		let m = moves.choose(&mut rng).unwrap();
-		g.mov(&m);
+		let rb = g.mov_with_rollback(&m);
 		eprintln!("{}", g);
-		v.push(g.clone());
+		v.push((g.clone(), rb));
 	}
 	eprintln!("rolling");
 	while !v.is_empty() {
 		let x = v.pop().unwrap();
-		if x.get_static_state() != g.get_static_state() {
+		if x.0.get_static_state() != g.get_static_state() {
 			eprintln!("rollback test failed!");
 			return;
 		}
 		if !v.is_empty() {
-			g.rollback();
+			g.rollback(x.1);
 		}
 		eprintln!("{}", g);
 	}
@@ -196,7 +194,6 @@ fn tablut_test() {
 }
 
 fn main() {
-	let x = compete::<Tablut, MinimaxSimple<Tablut>, MinimaxSimple<Tablut>>();
+	let x = compete::<Tablut, MonteCarloTotal<Tablut>, MonteCarloTreeSearch<Tablut>>();
 	eprintln!("{:?}", x);
-	//tablut_test();
 }

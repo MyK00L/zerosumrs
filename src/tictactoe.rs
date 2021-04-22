@@ -1,19 +1,18 @@
 use crate::game::*;
 
-#[derive(Debug, Hash, Clone, PartialEq, Eq)]
+#[derive(Debug, Hash, Clone, Copy, PartialEq, Eq)]
 pub struct Ttt {
 	a: [u8; 9],
 	turn: bool,
-	st: Vec<u8>,
 }
 impl Game for Ttt {
 	type M = u8;
 	type S = ([u8; 9], bool);
+	type R = u8;
 	fn new(t: bool) -> Self {
 		Ttt {
 			a: [2, 2, 2, 2, 2, 2, 2, 2, 2],
 			turn: t,
-			st: vec![],
 		}
 	}
 	fn turn(&self) -> bool {
@@ -80,14 +79,16 @@ impl Game for Ttt {
 			_ => 0,
 		}
 	}
-	fn mov(&mut self, m: &u8) {
-		self.st.push(*m);
+	fn mov(&mut self, m: &Self::M) {
 		self.a[*m as usize] = if self.turn { 1 } else { 0 };
 		self.turn = !self.turn;
 	}
-	fn rollback(&mut self) {
-		let case = self.st.pop().unwrap() as usize;
-		self.a[case] = 2;
+	fn mov_with_rollback(&mut self, m: &Self::M) -> Self::R {
+		self.mov(m);
+		*m
+	}
+	fn rollback(&mut self, m: Self::R) {
+		self.a[m as usize] = 2;
 		self.turn = !self.turn;
 	}
 }

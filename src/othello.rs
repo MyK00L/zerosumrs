@@ -16,11 +16,11 @@ const WEIGHTS: [i64; 64] = [
 	4, -3, 2, 2, 2, 2, -3, 4,
 ];
 
-#[derive(Debug, Hash, Clone, PartialEq, Eq)]
+#[derive(Debug, Hash, Clone, Copy, PartialEq, Eq)]
 pub struct Othello {
 	board: (u64, u64), // .0: cell contains piece or not, .1: piece is black or white (1 for player true, 0 for player false)
 	turn: bool,
-	st: Vec<(u8, Vec<u8>)>,
+	pass: u8,
 }
 impl Othello {
 	fn add_piece(&mut self, p: u8, c: bool) {
@@ -59,17 +59,14 @@ impl Othello {
 		false
 	}
 	// assumes reversable
-	fn reverse(&mut self, t: bool, mut pos: (i8, i8), dir: (i8, i8)) -> Vec<u8> {
+	fn reverse(&mut self, t: bool, mut pos: (i8, i8), dir: (i8, i8)) {
 		pos.0 += dir.0;
 		pos.1 += dir.1;
-		let mut ans = Vec::<u8>::new();
 		while self.get_piece(mapc(pos.0 as u8, pos.1 as u8)) != t {
 			self.flip(mapc(pos.0 as u8, pos.1 as u8));
-			ans.push(mapc(pos.0 as u8, pos.1 as u8));
 			pos.0 += dir.0;
 			pos.1 += dir.1;
 		}
-		ans
 	}
 }
 fn mapc(x: u8, y: u8) -> u8 {
@@ -81,11 +78,12 @@ fn unmapc(p: u8) -> (u8, u8) {
 impl Game for Othello {
 	type M = u8;
 	type S = (u64, u64, bool);
+	type R = (u64, u64);
 	fn new(t: bool) -> Self {
 		let mut ans = Othello {
 			board: (0, 0),
 			turn: t,
-			st: vec![],
+			pass: 0,
 		};
 		ans.add_piece(mapc(3, 3), true);
 		ans.add_piece(mapc(4, 4), true);
@@ -124,11 +122,7 @@ impl Game for Othello {
 		(self.board.0, self.board.1, self.turn)
 	}
 	fn state(&self) -> State {
-		if self.board.0 != u64::MAX
-			&& (self.st.len() < 2
-				|| self.st[self.st.len() - 1].0 != 64
-				|| self.st[self.st.len() - 2].0 != 64)
-		{
+		if self.board.0 != u64::MAX && self.pass < 2 {
 			State::Going
 		} else {
 			match self.board.1.count_ones() {
@@ -161,30 +155,30 @@ impl Game for Othello {
 		}
 	}
 	fn mov(&mut self, m: &u8) {
-		let mut ste = (*m, Vec::<u8>::new());
 		if *m != 64 {
 			let (x, y) = unmapc(*m);
 			for dir in DIRS.iter() {
 				if self.reversable(self.turn, (x as i8, y as i8), *dir) {
-					ste
-						.1
-						.extend(self.reverse(self.turn, (x as i8, y as i8), *dir));
+					self.reverse(self.turn, (x as i8, y as i8), *dir);
 				}
 			}
 			self.add_piece(*m, self.turn);
+		} else {
+			self.pass += 1;
 		}
 		self.turn = !self.turn;
-		self.st.push(ste);
 	}
-	fn rollback(&mut self) {
-		let ste = self.st.pop().unwrap();
-		self.turn = !self.turn;
-		if ste.0 != 64 {
-			self.rem_piece(ste.0);
-			for i in ste.1 {
-				self.flip(i);
-			}
+	fn mov_with_rollback(&mut self, m: &u8) -> Self::R {
+		let ans = self.board;
+		self.mov(m);
+		ans
+	}
+	fn rollback(&mut self, rb: Self::R) {
+		self.board = rb;
+		if self.pass != 0 {
+			self.pass -= 1;
 		}
+		self.turn = !self.turn;
 	}
 }
 impl std::fmt::Display for Othello {
