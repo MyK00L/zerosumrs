@@ -391,8 +391,8 @@ impl Game for Tablut {
 		self.turn += 1;
 		if self.get_moves().is_empty() {
 			self.state = match self.turn() {
-				true => State::Win,
-				false => State::Lose,
+				true => State::Lose,
+				false => State::Win,
 			}
 		}
 	}

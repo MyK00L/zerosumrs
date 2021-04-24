@@ -1,6 +1,7 @@
 use rand::prelude::SliceRandom;
 use rand::*;
 use rand_xoshiro::Xoroshiro128Plus;
+use std::fmt::Display;
 #[allow(unused_imports)]
 use std::io::{stdin, stdout, BufWriter, Write};
 
@@ -194,6 +195,6 @@ fn tablut_test() {
 }
 
 fn main() {
-	let x = compete::<Tablut, MonteCarloTotal<Tablut>, MonteCarloTreeSearch<Tablut>>();
+	let x = compete::<Tablut, MinimaxSimple<Tablut>, MinimaxSimple<Tablut>>();
 	eprintln!("{:?}", x);
 }
