@@ -299,7 +299,9 @@ impl Game for Tablut {
 				}
 			}
 		}
-
+		if ans.is_empty() {
+			ans.push((40, 40));
+		}
 		ans
 	}
 	fn get_moves_sorted(&self) -> Vec<Self::M> {
@@ -358,6 +360,14 @@ impl Game for Tablut {
 		}
 	}
 	fn mov(&mut self, m: &Self::M) {
+		if m.0 == m.1 {
+			self.state = match self.turn() {
+				true => State::Win,
+				false => State::Lose,
+			};
+			self.turn += 1;
+			return;
+		}
 		let x = self.get(m.0);
 		self.set(m.0, Tile::E);
 		self.set(m.1, x);
@@ -389,12 +399,6 @@ impl Game for Tablut {
 			self.state = State::Win;
 		}
 		self.turn += 1;
-		if self.get_moves().is_empty() {
-			self.state = match self.turn() {
-				true => State::Lose,
-				false => State::Win,
-			}
-		}
 	}
 	fn mov_with_rollback(&mut self, m: &Self::M) -> Self::R {
 		let mut rb = (*m, 0u8);
