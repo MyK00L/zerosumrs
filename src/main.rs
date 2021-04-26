@@ -31,7 +31,7 @@ mod monte_carlo_total;
 mod monte_carlo_tree_search;
 mod othello;
 mod random_agent;
-mod tablut;
+mod tablut_with_draw;
 mod tictactoe;
 
 use ai::*;
@@ -43,7 +43,7 @@ use monte_carlo_total::*;
 use monte_carlo_tree_search::*;
 use othello::*;
 use random_agent::*;
-use tablut::*;
+use tablut_with_draw::*;
 use tictactoe::*;
 
 fn random_play<G: Game>() -> (State, usize) {
