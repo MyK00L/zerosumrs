@@ -106,11 +106,11 @@ impl<G: Game> Ai<G> for MonteCarloTreeSearch<G> {
 		let moves = self.g.get_moves();
 		let mut i = 0;
 		let mut t = std::mem::take(&mut self.tree);
-		let g0 = self.g;
+		let g0 = self.g.clone();
 		loop {
 			for _ in 0..128 {
 				self.step(&mut t);
-				self.g = g0;
+				self.g = g0.clone();
 			}
 			i += 128;
 			if start_time.elapsed().unwrap().as_millis() > 500 {

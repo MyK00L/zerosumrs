@@ -9,9 +9,9 @@ pub enum State {
 	Draw,
 	Going,
 }
-pub trait Game: Clone + Copy + Debug + Display {
-	type M: Copy + PartialEq + Eq + Debug;
-	type S: Hash + Copy + PartialEq + Eq + Debug;
+pub trait Game: Clone + Debug + Display {
+	type M: Copy + Eq + Debug;
+	type S: Hash + Copy + Eq + Debug;
 	type R: Copy + Debug + Default;
 	fn new(t: bool) -> Self;
 	fn turn(&self) -> bool;

@@ -52,7 +52,7 @@ impl<G: Game> Ai<G> for MonteCarloTotal<G> {
 		let turn = self.g.turn();
 		let mut v = vec![0u32; moves.len()];
 		let mut i = 0;
-		let g0 = self.g;
+		let g0 = self.g.clone();
 		loop {
 			if start_time.elapsed().unwrap().as_millis() > 250 {
 				break;
@@ -60,7 +60,7 @@ impl<G: Game> Ai<G> for MonteCarloTotal<G> {
 			i += 1;
 			for mm in moves.iter().enumerate() {
 				v[mm.0] += self.explore_branch(mm.1, turn);
-				self.g = g0;
+				self.g = g0.clone();
 			}
 		}
 		let best_ind = v.iter().enumerate().max_by_key(|x| x.1).unwrap().0;
