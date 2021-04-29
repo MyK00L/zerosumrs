@@ -27,11 +27,13 @@ mod game;
 mod mancala;
 mod minimax_hard;
 mod minimax_simple;
+mod minimax_tablut;
 mod monte_carlo_total;
 mod monte_carlo_tree_search;
 mod othello;
 mod random_agent;
 mod tablut_with_draw;
+//mod tablut;
 mod tictactoe;
 
 use ai::*;
@@ -39,11 +41,13 @@ use game::*;
 use mancala::*;
 use minimax_hard::*;
 use minimax_simple::*;
+use minimax_tablut::*;
 use monte_carlo_total::*;
 use monte_carlo_tree_search::*;
 use othello::*;
 use random_agent::*;
 use tablut_with_draw::*;
+//use tablut::*;
 use tictactoe::*;
 
 fn random_play<G: Game>() -> (State, usize) {
@@ -194,7 +198,63 @@ fn tablut_test() {
 	}
 }
 
+fn dothing() {
+	let mut mf = [0usize; 81 * 81];
+	let mut mftot = [0usize; 81 * 81];
+	let mut mdf = [0usize; 9];
+	let mut mdftot = [0usize; 9];
+
+	for _ in 0..1 {
+		let mut a = MinimaxTablut::new(true);
+		let mut b = MinimaxTablut::new(true);
+		let mut movind = 0;
+		while a.state() == State::Going && movind < 40 {
+			let m = match a.turn() {
+				true => a.get_mov(),
+				false => b.get_mov(),
+			};
+			a.mov(&m);
+			b.mov(&m);
+			movind += 1;
+		}
+		for i in 0..(81 * 81) {
+			mf[i] += b.mf[i] * 10;
+			mftot[i] += b.mftot[i] * 10;
+		}
+		for i in 0..9 {
+			mdf[i] += b.mdf[i] * 10;
+			mdftot[i] += b.mdftot[i] * 10;
+		}
+	}
+	for _ in 0..10 {
+		let mut b = MinimaxTablut::new(true);
+		let mut a = RandomAgent::<Tablut>::new(true);
+		while a.state() == State::Going {
+			let m = match a.turn() {
+				true => a.get_mov(),
+				false => b.get_mov(),
+			};
+			a.mov(&m);
+			b.mov(&m);
+		}
+		for i in 0..(81 * 81) {
+			mf[i] += b.mf[i];
+			mftot[i] += b.mftot[i];
+		}
+		for i in 0..9 {
+			mdf[i] += b.mdf[i];
+			mdftot[i] += b.mdftot[i];
+		}
+	}
+	for i in 0..9 {
+		print!("{}:{} ", i, (mdf[i] + 1) as f64 / (mdftot[i] + 2) as f64);
+	}
+	println!();
+}
+
 fn main() {
-	let x = compete::<Tablut, MinimaxSimple<Tablut>, MinimaxSimple<Tablut>>();
-	eprintln!("{:?}", x);
+	let x = compete::<Tablut, MinimaxTablut, MinimaxSimple<Tablut>>();
+	eprintln!("tvs {:?}", x);
+	let y = compete::<Tablut, MinimaxSimple<Tablut>, MinimaxTablut>();
+	eprintln!("svt {:?}", y);
 }

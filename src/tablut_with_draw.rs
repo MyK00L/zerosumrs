@@ -149,7 +149,7 @@ const CAPTURE_AID: [bool; 81] = [
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Tablut {
 	board: [u8; 21],
-	turn: u32, //%2=0 defender, %2=1 attacker
+	pub turn: u32, //%2=0 defender, %2=1 attacker
 	state: State,
 	vis: HashSet<<super::tablut_with_draw::Tablut as Game>::S>,
 }
@@ -162,7 +162,7 @@ fn unmapc(p: u8) -> (u8, u8) {
 pub fn is_block_um(p: u8) -> bool {
 	BLOCKS[p as usize]
 }
-fn is_capture_aid(p: u8) -> bool {
+pub fn is_capture_aid(p: u8) -> bool {
 	CAPTURE_AID[p as usize]
 }
 impl Tablut {
@@ -330,8 +330,8 @@ impl Game for Tablut {
 	}
 	fn heuristic(&self) -> i64 {
 		match self.state() {
-			State::Win => 32768,
-			State::Lose => -32768,
+			State::Win => 32768-self.turn as i64,
+			State::Lose => -32768+self.turn as i64,
 			State::Draw => 0,
 			State::Going => {
 				//nd * 6 - na * 3 - ma + 2 * md + 4 * mk
