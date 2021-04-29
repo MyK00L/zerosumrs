@@ -3,7 +3,7 @@ use crate::game::*;
 use rand::prelude::SliceRandom;
 use rand::*;
 use rand_xoshiro::Xoroshiro128Plus;
-use std::time::SystemTime;
+use std::time::Instant;
 
 struct Tree<G: Game> {
 	wins: u32,
@@ -102,7 +102,7 @@ impl<G: Game> Ai<G> for MonteCarloTreeSearch<G> {
 		self.g.turn()
 	}
 	fn get_mov(&mut self) -> G::M {
-		let start_time = SystemTime::now();
+		let start_time = Instant::now();
 		let moves = self.g.get_moves();
 		let mut i = 0;
 		let mut t = std::mem::take(&mut self.tree);
@@ -113,7 +113,7 @@ impl<G: Game> Ai<G> for MonteCarloTreeSearch<G> {
 				self.g = g0.clone();
 			}
 			i += 128;
-			if start_time.elapsed().unwrap().as_millis() > 3000 {
+			if start_time.elapsed().as_millis() > 3000 {
 				break;
 			}
 		}
@@ -130,7 +130,7 @@ impl<G: Game> Ai<G> for MonteCarloTreeSearch<G> {
 		}
 		eprintln!(
 			"monte_carlo_tree_search chose move in {} milliseconds with {} iterations",
-			start_time.elapsed().unwrap().as_millis(),
+			start_time.elapsed().as_millis(),
 			i,
 		);
 		best_mov

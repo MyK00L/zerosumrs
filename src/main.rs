@@ -2,6 +2,7 @@ use rand::prelude::SliceRandom;
 use rand::*;
 use rand_xoshiro::Xoroshiro128Plus;
 use std::fmt::Display;
+use std::time::Instant;
 #[allow(unused_imports)]
 use std::io::{stdin, stdout, BufWriter, Write};
 
@@ -254,9 +255,37 @@ fn dothing() {
 	println!();
 }
 
+pub fn compete<G: Game + Display, A: Ai<G>, B: Ai<G>>() {
+	eprintln!("Start {} vs {} in {}", std::any::type_name::<A>(), std::any::type_name::<B>(), std::any::type_name::<G>());
+	let mut a = A::new(true);
+	let mut b = B::new(true);
+	let mut tta = 0;
+	let mut ttb = 0;
+	while a.state() == State::Going {
+		let tts = Instant::now();
+		let m = match a.turn() {
+			true => a.get_mov(),
+			false => b.get_mov(),
+		};
+		if a.turn() {
+			tta+=tts.elapsed().as_millis();
+		} else {
+			ttb+=tts.elapsed().as_millis();
+		}
+		a.mov(&m);
+		b.mov(&m);
+		a.print2game();
+	}
+	if b.state() != a.state() {
+		eprintln!("WTF STATES ARE DESYNCED HELP!!?");
+		eprintln!("{} state: {:?}\n{} state: {:?}", std::any::type_name::<A>(), a.state(), std::any::type_name::<B>(), b.state());
+	}
+	eprintln!("{} total think time: {}ms\n{} total think time: {}ms",std::any::type_name::<A>(),tta,std::any::type_name::<B>(),ttb);
+	eprintln!("{}\tvs\t{}",std::any::type_name::<A>(),std::any::type_name::<B>());
+	eprintln!("{}\t-\t{}",if a.state() == State::Win { 1 } else { 0 }, if a.state() == State::Lose { 1 } else { 0 });
+}
+
 fn main() {
-	let x = compete::<Tablut, MinimaxSimple<Tablut>, MinimaxFinal<Tablut>>();
-	eprintln!("Simple vs Final {:?}", x);
-	let y = compete::<Tablut, MinimaxFinal<Tablut>, MinimaxSimple<Tablut>>();
-	eprintln!("Final vs Simple {:?}", y);
+	compete::<Tablut, MinimaxSimple<Tablut>, MinimaxFinal<Tablut>>();
+	compete::<Tablut, MinimaxFinal<Tablut>, MinimaxSimple<Tablut>>();
 }

@@ -1,7 +1,7 @@
 use crate::ai::Ai;
 use crate::game::*;
 use std::mem::take;
-use std::time::SystemTime;
+use std::time::Instant;
 
 struct Tree<G: Game> {
 	val: i64,
@@ -101,13 +101,13 @@ impl<G: Game> Ai<G> for MinimaxFinal<G> {
 		self.g.turn()
 	}
 	fn get_mov(&mut self) -> G::M {
-		let start_time = SystemTime::now();
+		let start_time = Instant::now();
 		let mut t = take(&mut self.tree);
 		eprintln!("starting at depth {} + 1", self.cur_depth);
 		while t.val > -30000 && t.val < 30000 {
 			self.cur_depth += 1;
 			self.minimax(i64::MIN, i64::MAX, self.cur_depth, &mut t);
-			if start_time.elapsed().unwrap().as_millis() * 20 > 2000 {
+			if start_time.elapsed().as_millis() * 20 > 2000 {
 				break;
 			}
 		}
@@ -120,7 +120,7 @@ impl<G: Game> Ai<G> for MinimaxFinal<G> {
 			.0;
 		eprintln!(
 			"minimax_final chose move in {} milliseconds with {} depth",
-			start_time.elapsed().unwrap().as_millis(),
+			start_time.elapsed().as_millis(),
 			self.cur_depth
 		);
 		self.tree = t;

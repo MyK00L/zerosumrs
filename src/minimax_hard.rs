@@ -1,7 +1,7 @@
 use crate::ai::Ai;
 use crate::game::*;
 use std::collections::HashMap;
-use std::time::SystemTime;
+use std::time::Instant;
 
 pub struct MinimaxHard<G: Game> {
 	pub g: G,
@@ -131,11 +131,11 @@ impl<G: Game> Ai<G> for MinimaxHard<G> {
 		self.g.turn()
 	}
 	fn get_mov(&mut self) -> G::M {
-		let start_time = SystemTime::now();
+		let start_time = Instant::now();
 		let mut depth = 1;
 		let mut ans = self.minimax_move(1);
 		loop {
-			if start_time.elapsed().unwrap().as_millis() * 20 > 2000 {
+			if start_time.elapsed().as_millis() * 20 > 2000 {
 				break;
 			}
 			depth += 1;
@@ -143,7 +143,7 @@ impl<G: Game> Ai<G> for MinimaxHard<G> {
 		}
 		eprintln!(
 			"minimax_hard chose move in {} milliseconds with {} depth",
-			start_time.elapsed().unwrap().as_millis(),
+			start_time.elapsed().as_millis(),
 			depth
 		);
 		ans

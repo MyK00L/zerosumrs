@@ -3,7 +3,7 @@ use crate::game::*;
 use rand::prelude::SliceRandom;
 use rand::*;
 use rand_xoshiro::Xoroshiro128Plus;
-use std::time::SystemTime;
+use std::time::Instant;
 
 pub struct MonteCarloTotal<G: Game> {
 	pub g: G,
@@ -47,14 +47,14 @@ impl<G: Game> Ai<G> for MonteCarloTotal<G> {
 		self.g.turn()
 	}
 	fn get_mov(&mut self) -> G::M {
-		let start_time = SystemTime::now();
+		let start_time = Instant::now();
 		let moves = self.g.get_moves();
 		let turn = self.g.turn();
 		let mut v = vec![0u32; moves.len()];
 		let mut i = 0;
 		let g0 = self.g.clone();
 		loop {
-			if start_time.elapsed().unwrap().as_millis() > 250 {
+			if start_time.elapsed().as_millis() > 250 {
 				break;
 			}
 			i += 1;
@@ -67,7 +67,7 @@ impl<G: Game> Ai<G> for MonteCarloTotal<G> {
 		let ans = moves[best_ind];
 		eprintln!(
 			"monte_carlo_total chose move in {} milliseconds with {} iterations | confidence: {}",
-			start_time.elapsed().unwrap().as_millis(),
+			start_time.elapsed().as_millis(),
 			i,
 			v[best_ind] as f32 / i as f32,
 		);
