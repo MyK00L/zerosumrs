@@ -1,7 +1,7 @@
 use crate::game::*;
 
 #[derive(Hash, Clone, Copy, PartialEq, Eq, Debug)]
-enum Tile {
+pub enum Tile {
 	E, // Empty=0
 	A, // Attacker=1
 	D, // Defender=2
@@ -151,20 +151,20 @@ pub struct Tablut {
 	turn: u32, //%2=0 defender, %2=1 attacker
 	state: State,
 }
-fn mapc(x: u8, y: u8) -> u8 {
+pub fn mapc(x: u8, y: u8) -> u8 {
 	y * 9 + x
 }
 fn unmapc(p: u8) -> (u8, u8) {
 	(p % 9, p / 9)
 }
-fn is_block_um(p: u8) -> bool {
+pub fn is_block_um(p: u8) -> bool {
 	BLOCKS[p as usize]
 }
 fn is_capture_aid(p: u8) -> bool {
 	CAPTURE_AID[p as usize]
 }
 impl Tablut {
-	fn get(&self, pos: u8) -> Tile {
+	pub fn get(&self, pos: u8) -> Tile {
 		((self.board[(pos >> 2) as usize] >> (pos & 3) >> (pos & 3)) & 3).into()
 	}
 	fn set(&mut self, pos: u8, v: Tile) {
@@ -305,7 +305,25 @@ impl Game for Tablut {
 		ans
 	}
 	fn get_moves_sorted(&self) -> Vec<Self::M> {
-		self.get_moves() // to implement?
+let mut ans = self.get_moves();
+    ans.sort_unstable_by_key(
+    |m| {
+      const ORDI:[[u8;9];2] =
+      [
+      // 0,1,2,3,4,5,6,7,8   // old order
+        [9,4,5,3,6,7,2,1,0], // def, lower is better
+        [9,5,2,4,3,7,1,6,0], // atk, lower is better
+      ];
+      let dif = if m.0 > m.1 {
+        m.0 - m.1
+      } else {
+        m.1 - m.0
+      };
+      let dist = if dif >= 9 { dif / 9 } else { dif };
+      ORDI[(self.turn&1) as usize][dist as usize]
+    }
+    );
+    ans	
 	}
 	fn get_static_state(&self) -> Self::S {
 		(self.board, self.turn())
@@ -315,47 +333,118 @@ impl Game for Tablut {
 	}
 	fn heuristic(&self) -> i64 {
 		match self.state() {
-			State::Win => 32768 - (self.turn as i64),
-			State::Lose => -32768 + (self.turn as i64),
+			State::Win => 32768,
+			State::Lose => -32768,
 			State::Draw => 0,
 			State::Going => {
-				let mut nd = 0;
-				let mut md = 0;
-				let mut na = 0;
-				let mut ma = 0;
-				let mut mk = 0;
+				//nd * 6 - na * 3 - ma + 2 * md + 4 * mk
+				let mut ans = -16 + if self.turn() { 1 } else { -1 };
 				for i in 0..81 {
 					let t = self.get(i);
 					if t == Tile::D {
-						nd += 1;
+						ans += 6;
 					}
 					if t == Tile::A {
-						na += 1;
+						ans -= 3;
 					}
 				}
-				let mut gc = Tablut {
-					board: self.board,
-					turn: self.turn,
-					state: State::Going,
-				};
-				for _ in 0..2 {
-					for i in gc.get_moves() {
-						match gc.get(i.0) {
-							Tile::D => {
-								md += 1;
+				// right
+				for y in 0..9 {
+					let mut last = Tile::E;
+					let mut lastp = 128u8;
+					for x in 0..9 {
+						let p = mapc(x, y);
+						let t = self.get(p);
+						if t == Tile::E {
+							if is_block_um(p) && (last == Tile::E || !is_block_um(lastp) || p - lastp > 2) {
+								last = Tile::E;
+							} else if last != Tile::E {
+								ans += match last {
+									Tile::D => 2,
+									Tile::K => 4,
+									Tile::A => -1,
+									_ => 0,
+								}
 							}
-							Tile::K => {
-								mk += 1;
-							}
-							Tile::A => {
-								ma += 1;
-							}
-							_ => {}
+						} else {
+							last = t;
+							lastp = mapc(x, y);
 						}
 					}
-					gc.turn ^= 1;
 				}
-				nd * 6 - na * 3 - ma + 2 * md + 4 * mk
+				// left
+				for y in 0..9 {
+					let mut last = Tile::E;
+					let mut lastp = 128u8;
+					for x in (0..9).rev() {
+						let p = mapc(x, y);
+						let t = self.get(p);
+						if t == Tile::E {
+							if is_block_um(p) && (last == Tile::E || !is_block_um(lastp) || lastp - p > 2) {
+								last = Tile::E;
+							} else if last != Tile::E {
+								ans += match last {
+									Tile::D => 2,
+									Tile::K => 4,
+									Tile::A => -1,
+									_ => 0,
+								}
+							}
+						} else {
+							last = t;
+							lastp = mapc(x, y);
+						}
+					}
+				}
+				// down
+				for x in 0..9 {
+					let mut last = Tile::E;
+					let mut lastp = 128u8;
+					for y in 0..9 {
+						let p = mapc(x, y);
+						let t = self.get(p);
+						if t == Tile::E {
+							if is_block_um(p) && (last == Tile::E || !is_block_um(lastp) || p - lastp > 2 * 9) {
+								last = Tile::E;
+							} else if last != Tile::E {
+								ans += match last {
+									Tile::D => 2,
+									Tile::K => 4,
+									Tile::A => -1,
+									_ => 0,
+								}
+							}
+						} else {
+							last = t;
+							lastp = mapc(x, y);
+						}
+					}
+				}
+				// up
+				for x in 0..9 {
+					let mut last = Tile::E;
+					let mut lastp = 128u8;
+					for y in (0..9).rev() {
+						let p = mapc(x, y);
+						let t = self.get(p);
+						if t == Tile::E {
+							if is_block_um(p) && (last == Tile::E || !is_block_um(lastp) || lastp - p > 2 * 9) {
+								last = Tile::E;
+							} else if last != Tile::E {
+								ans += match last {
+									Tile::D => 2,
+									Tile::K => 4,
+									Tile::A => -1,
+									_ => 0,
+								}
+							}
+						} else {
+							last = t;
+							lastp = mapc(x, y);
+						}
+					}
+				}
+				ans
 			}
 		}
 	}

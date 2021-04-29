@@ -135,8 +135,7 @@ impl<G: Game> Ai<G> for MinimaxHard<G> {
 		let mut depth = 1;
 		let mut ans = self.minimax_move(1);
 		loop {
-			let elapsed = start_time.elapsed().unwrap().as_millis() + 1;
-			if elapsed > 250 {
+			if start_time.elapsed().unwrap().as_millis() * 20 > 2000 {
 				break;
 			}
 			depth += 1;
