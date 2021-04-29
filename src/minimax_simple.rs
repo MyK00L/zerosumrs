@@ -62,6 +62,14 @@ impl<G: Game> MinimaxSimple<G> {
 		}
 		ans
 	}
+
+	pub fn new_with_game(g: G) -> Self {
+		Self { g }
+	}
+
+	pub fn get_mov_with_fixed_depth(&mut self, depth: u32) -> G::M {
+		self.minimax_move(depth)
+	}
 }
 
 impl<G: Game> Ai<G> for MinimaxSimple<G> {
