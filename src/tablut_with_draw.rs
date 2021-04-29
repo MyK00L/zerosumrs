@@ -330,8 +330,8 @@ impl Game for Tablut {
 	}
 	fn heuristic(&self) -> i64 {
 		match self.state() {
-			State::Win => 32768-self.turn as i64,
-			State::Lose => -32768+self.turn as i64,
+			State::Win => 32768 - self.turn as i64,
+			State::Lose => -32768 + self.turn as i64,
 			State::Draw => 0,
 			State::Going => {
 				//nd * 6 - na * 3 - ma + 2 * md + 4 * mk

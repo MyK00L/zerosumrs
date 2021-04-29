@@ -33,12 +33,12 @@ const A_VALS: [i64; 8] = [-16, -17, -18, -19, -20, -21, -22, -26];
 impl MinimaxTablut {
 	fn heur(&mut self) -> i64 {
 		match self.g.state() {
-			State::Win => 32768-self.g.turn as i64,
-			State::Lose => -32768+self.g.turn as i64,
+			State::Win => 32768 - self.g.turn as i64,
+			State::Lose => -32768 + self.g.turn as i64,
 			State::Draw => 0,
 			State::Going => {
 				//nd * 6 - na * 3 - ma + 2 * md + 4 * mk
-				let mut ans = if self.turn() { 1 } else { -1 } -16;
+				let mut ans = if self.turn() { 1 } else { -1 } - 16;
 				for i in 0..81 {
 					let t = self.g.get(i);
 					if t == Tile::D {

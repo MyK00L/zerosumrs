@@ -25,6 +25,7 @@ impl Scanner {
 mod ai;
 mod game;
 mod mancala;
+mod minimax_final;
 mod minimax_hard;
 mod minimax_simple;
 mod minimax_tablut;
@@ -39,6 +40,7 @@ mod tictactoe;
 use ai::*;
 use game::*;
 use mancala::*;
+use minimax_final::*;
 use minimax_hard::*;
 use minimax_simple::*;
 use minimax_tablut::*;
@@ -253,8 +255,8 @@ fn dothing() {
 }
 
 fn main() {
-	let x = compete::<Tablut, MinimaxTablut, MinimaxSimple<Tablut>>();
-	eprintln!("tvs {:?}", x);
-	let y = compete::<Tablut, MinimaxSimple<Tablut>, MinimaxTablut>();
-	eprintln!("svt {:?}", y);
+	let x = compete::<Tablut, MinimaxSimple<Tablut>, MinimaxFinal<Tablut>>();
+	eprintln!("Simple vs Final {:?}", x);
+	let y = compete::<Tablut, MinimaxFinal<Tablut>, MinimaxSimple<Tablut>>();
+	eprintln!("Final vs Simple {:?}", y);
 }

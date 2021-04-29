@@ -113,7 +113,7 @@ impl<G: Game> Ai<G> for MonteCarloTreeSearch<G> {
 				self.g = g0.clone();
 			}
 			i += 128;
-			if start_time.elapsed().unwrap().as_millis() > 500 {
+			if start_time.elapsed().unwrap().as_millis() > 3000 {
 				break;
 			}
 		}
