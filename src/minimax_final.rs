@@ -29,14 +29,14 @@ pub struct MinimaxFinal<G: Game> {
 
 impl<G: Game> MinimaxFinal<G> {
 	// assumes to be called with depth always increased by 1 relative to Tree
-	fn minimax(&mut self, mut a: i64, mut b: i64, depth: u32, t: &mut Tree<G>) -> i64 {
+	fn minimax(&mut self, mut a: i64, mut b: i64, depth: u32, t: &mut Tree<G>) {
 		if self.g.state() != State::Going || depth == 0 {
 			t.val = self.g.heuristic();
-			return t.val;
+			return;
 		}
 		// if win/loss is certain, no need to check again
 		if t.val > 30000 || t.val < -30000 {
-			return t.val;
+			return;
 		}
 		if t.children.is_empty() {
 			t.children = self
@@ -59,7 +59,8 @@ impl<G: Game> MinimaxFinal<G> {
 		if self.g.turn() {
 			for c in t.children.iter_mut() {
 				let rb = self.g.mov_with_rollback(&c.0);
-				let h = self.minimax(a, b, depth - 1, &mut c.1);
+				self.minimax(a, b, depth - 1, &mut c.1);
+				let h = c.1.val;
 				self.g.rollback(rb);
 				a = a.max(h);
 				if a >= b {
@@ -69,7 +70,8 @@ impl<G: Game> MinimaxFinal<G> {
 		} else {
 			for c in t.children.iter_mut() {
 				let rb = self.g.mov_with_rollback(&c.0);
-				let h = self.minimax(a, b, depth - 1, &mut c.1);
+				self.minimax(a, b, depth - 1, &mut c.1);
+				let h = c.1.val;
 				self.g.rollback(rb);
 				b = b.min(h);
 				if a >= b {
@@ -78,7 +80,6 @@ impl<G: Game> MinimaxFinal<G> {
 			}
 		}
 		t.val = if self.g.turn() { a } else { b };
-		t.val
 	}
 }
 
