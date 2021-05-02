@@ -69,10 +69,10 @@ impl<G: Game> MinimaxSimple<G> {
 			}
 		}
 		if self.ended_early {
-			return true;
+			true
 		} else {
 			self.last_ans=ans;
-			return false;
+			false
 		}
 	}
 }
