@@ -1,6 +1,7 @@
 use crate::ai::Ai;
 use crate::game::*;
 use std::time::Instant;
+use std::time::Duration;
 
 pub struct MinimaxSimple<G: Game> {
 	pub g: G,
@@ -77,22 +78,17 @@ impl<G: Game> Ai<G> for MinimaxSimple<G> {
 	fn turn(&self) -> bool {
 		self.g.turn()
 	}
-	fn get_mov(&mut self) -> G::M {
+	fn get_mov(&mut self, tl: Duration) -> G::M {
 		let start_time = Instant::now();
 		let mut depth = 1;
 		let mut ans = self.minimax_move(1);
 		loop {
-			if start_time.elapsed().as_millis() * 20 > 2000 {
+			if start_time.elapsed() * 20 > tl {
 				break;
 			}
 			depth += 1;
 			ans = self.minimax_move(depth);
 		}
-		eprintln!(
-			"minimax_simple chose move in {} milliseconds with {} depth",
-			start_time.elapsed().as_millis(),
-			depth
-		);
 		ans
 	}
 	fn mov(&mut self, m: &G::M) {

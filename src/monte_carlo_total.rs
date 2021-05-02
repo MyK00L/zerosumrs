@@ -4,6 +4,7 @@ use rand::prelude::SliceRandom;
 use rand::*;
 use rand_xoshiro::Xoroshiro128Plus;
 use std::time::Instant;
+use std::time::Duration;
 
 pub struct MonteCarloTotal<G: Game> {
 	pub g: G,
@@ -46,7 +47,7 @@ impl<G: Game> Ai<G> for MonteCarloTotal<G> {
 	fn turn(&self) -> bool {
 		self.g.turn()
 	}
-	fn get_mov(&mut self) -> G::M {
+	fn get_mov(&mut self, tl: Duration) -> G::M {
 		let start_time = Instant::now();
 		let moves = self.g.get_moves();
 		let turn = self.g.turn();
@@ -54,7 +55,7 @@ impl<G: Game> Ai<G> for MonteCarloTotal<G> {
 		let mut i = 0;
 		let g0 = self.g.clone();
 		loop {
-			if start_time.elapsed().as_millis() > 250 {
+			if start_time.elapsed() > tl {
 				break;
 			}
 			i += 1;

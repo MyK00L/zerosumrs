@@ -25,7 +25,7 @@ impl<G: Game> Ai<G> for RandomAgent<G> {
 	fn turn(&self) -> bool {
 		self.g.turn()
 	}
-	fn get_mov(&mut self) -> G::M {
+	fn get_mov(&mut self, _tl: std::time::Duration) -> G::M {
 		*self.g.get_moves().choose(&mut self.rng).unwrap()
 	}
 	fn mov(&mut self, m: &G::M) {

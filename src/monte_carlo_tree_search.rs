@@ -4,6 +4,7 @@ use rand::prelude::SliceRandom;
 use rand::*;
 use rand_xoshiro::Xoroshiro128Plus;
 use std::time::Instant;
+use std::time::Duration;
 
 struct Tree<G: Game> {
 	wins: u32,
@@ -101,7 +102,7 @@ impl<G: Game> Ai<G> for MonteCarloTreeSearch<G> {
 	fn turn(&self) -> bool {
 		self.g.turn()
 	}
-	fn get_mov(&mut self) -> G::M {
+	fn get_mov(&mut self, tl: Duration) -> G::M {
 		let start_time = Instant::now();
 		let moves = self.g.get_moves();
 		let mut i = 0;
@@ -113,7 +114,7 @@ impl<G: Game> Ai<G> for MonteCarloTreeSearch<G> {
 				self.g = g0.clone();
 			}
 			i += 128;
-			if start_time.elapsed().as_millis() > 3000 {
+			if start_time.elapsed() > tl {
 				break;
 			}
 		}

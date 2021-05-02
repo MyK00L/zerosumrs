@@ -19,6 +19,7 @@ use rand::*;
 use rand_xoshiro::Xoroshiro128Plus;
 use std::fmt::Display;
 use std::time::Instant;
+use std::time::Duration;
 
 fn random_play<G: Game>() -> (State, usize) {
 	let mut rng = Xoroshiro128Plus::from_rng(rand::thread_rng()).unwrap();
@@ -67,7 +68,7 @@ pub fn print_stats<G: Game>() {
 	);
 }
 
-pub fn compete<G: Game + Display, A: Ai<G>, B: Ai<G>>() {
+pub fn compete<G: Game + Display, A: Ai<G>, B: Ai<G>>(tl: Duration) {
 	eprintln!(
 		"Start {} vs {} in {}",
 		std::any::type_name::<A>(),
@@ -83,8 +84,8 @@ pub fn compete<G: Game + Display, A: Ai<G>, B: Ai<G>>() {
 	while a.state() == State::Going {
 		let tts = Instant::now();
 		let m = match a.turn() {
-			true => a.get_mov(),
-			false => b.get_mov(),
+			true => a.get_mov(tl),
+			false => b.get_mov(tl),
 		};
 		if a.turn() {
 			na += 1;
@@ -150,10 +151,11 @@ mod tests {
 		let mut b = B::new(true);
 		let mut g = G::new(true);
 		let mut v = vec![(g.clone(), G::R::default())];
+		let tl = std::time::Duration::from_millis(10);
 		while g.state() == State::Going {
 			let m = match g.turn() {
-				true => a.get_mov(),
-				false => b.get_mov(),
+				true => a.get_mov(tl),
+				false => b.get_mov(tl),
 			};
 			let rb = g.mov_with_rollback(&m);
 			a.mov(&m);
