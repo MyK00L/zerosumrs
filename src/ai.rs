@@ -8,4 +8,3 @@ pub trait Ai<G: Game> {
 	fn get_mov(&mut self) -> G::M;
 	fn mov(&mut self, m: &G::M);
 }
-

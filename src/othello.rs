@@ -27,10 +27,6 @@ impl Othello {
 		self.board.0 |= 1u64 << p;
 		self.board.1 |= (c as u64) << p;
 	}
-	fn rem_piece(&mut self, p: u8) {
-		self.board.0 &= !(1u64 << p);
-		self.board.1 &= !(1u64 << p);
-	}
 	fn flip(&mut self, p: u8) {
 		self.board.1 ^= 1u64 << p;
 	}

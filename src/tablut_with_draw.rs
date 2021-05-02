@@ -156,9 +156,6 @@ pub struct Tablut {
 pub fn mapc(x: u8, y: u8) -> u8 {
 	y * 9 + x
 }
-fn unmapc(p: u8) -> (u8, u8) {
-	(p % 9, p / 9)
-}
 pub fn is_block_um(p: u8) -> bool {
 	BLOCKS[p as usize]
 }

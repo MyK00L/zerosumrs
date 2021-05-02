@@ -104,12 +104,16 @@ impl<G: Game> Ai<G> for MinimaxFinal<G> {
 		let start_time = Instant::now();
 		let mut t = take(&mut self.tree);
 		eprintln!("starting at depth {} + 1", self.cur_depth);
-		while t.val > -30000 && t.val < 30000 {
+		/*while t.val > -30000 && t.val < 30000 {
 			self.cur_depth += 1;
 			self.minimax(i64::MIN, i64::MAX, self.cur_depth, &mut t);
 			if start_time.elapsed().as_millis() * 20 > 2000 {
 				break;
 			}
+		}*/
+		while t.val > -30000 && t.val < 30000 && self.cur_depth <= 4 {
+			self.cur_depth += 1;
+			self.minimax(i64::MIN, i64::MAX, self.cur_depth, &mut t);
 		}
 		eprintln!("val: {}", t.val);
 		let ans = t
@@ -138,6 +142,5 @@ impl<G: Game> Ai<G> for MinimaxFinal<G> {
 			self.cur_depth -= 1;
 		}
 		self.g.mov(m);
-		eprintln!("heur: {}", self.g.heuristic());
 	}
 }
