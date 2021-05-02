@@ -47,8 +47,9 @@ impl<G: Game> Ai<G> for MonteCarloTotal<G> {
 	fn turn(&self) -> bool {
 		self.g.turn()
 	}
-	fn get_mov(&mut self, tl: Duration) -> G::M {
+	fn get_mov(&mut self, mut tl: Duration) -> G::M {
 		let start_time = Instant::now();
+		tl-=Duration::from_millis(20);
 		let moves = self.g.get_moves();
 		let turn = self.g.turn();
 		let mut v = vec![0u32; moves.len()];

@@ -5,6 +5,11 @@ use std::time::Duration;
 
 pub struct MinimaxSimple<G: Game> {
 	pub g: G,
+	nnw: u8,
+	tl: Duration,
+	st: Instant,
+	last_ans: G::M,
+	ended_early: bool,
 }
 
 impl<G: Game> MinimaxSimple<G> {
@@ -12,8 +17,13 @@ impl<G: Game> MinimaxSimple<G> {
 		if self.g.state() != State::Going || depth == 0 {
 			return self.g.heuristic();
 		}
-		let moves = self.g.get_moves_sorted();
 		let mut res = if self.g.turn() { a } else { b };
+		self.nnw = self.nnw.wrapping_add(1);
+		if self.ended_early || (self.nnw==0 && self.st.elapsed()>self.tl) {
+			self.ended_early = true;
+			return res;
+		}
+		let moves = self.g.get_moves_sorted();
 		for m in moves.iter() {
 			let rb = self.g.mov_with_rollback(m);
 			let h = self.minimax(a, b, depth - 1);
@@ -25,16 +35,13 @@ impl<G: Game> MinimaxSimple<G> {
 				res = res.min(h);
 				b = b.min(h);
 			}
-			if a >= b {
+			if a >= b || self.ended_early {
 				break;
 			}
 		}
 		res
 	}
-	fn minimax_move(&mut self, depth: u32) -> G::M {
-		if self.g.state() != State::Going || depth == 0 {
-			panic!();
-		}
+	fn minimax_move(&mut self, depth: u32) -> bool {
 		let mut a = i64::MIN;
 		let mut b = i64::MAX;
 		let moves = self.g.get_moves_sorted();
@@ -57,17 +64,22 @@ impl<G: Game> MinimaxSimple<G> {
 				}
 				b = b.min(h);
 			}
-			if a >= b {
+			if a >= b || self.ended_early {
 				break;
 			}
 		}
-		ans
+		if self.ended_early {
+			return true;
+		} else {
+			self.last_ans=ans;
+			return false;
+		}
 	}
 }
 
 impl<G: Game> Ai<G> for MinimaxSimple<G> {
 	fn new(t: bool) -> Self {
-		Self { g: G::new(t) }
+		Self { g: G::new(t), nnw: 0, tl: Duration::ZERO, st:Instant::now(), last_ans: G::M::default(), ended_early: false }
 	}
 	fn state(&self) -> State {
 		self.g.state()
@@ -79,17 +91,15 @@ impl<G: Game> Ai<G> for MinimaxSimple<G> {
 		self.g.turn()
 	}
 	fn get_mov(&mut self, tl: Duration) -> G::M {
-		let start_time = Instant::now();
 		let mut depth = 1;
-		let mut ans = self.minimax_move(1);
-		loop {
-			if start_time.elapsed() * 20 > tl {
-				break;
-			}
-			depth += 1;
-			ans = self.minimax_move(depth);
+		self.tl = tl-Duration::from_millis(20);
+		self.st = Instant::now();
+		self.ended_early = false;
+		while !self.minimax_move(depth) {
+			depth+=1;
 		}
-		ans
+		eprintln!("minimax_simple depth {}",depth-1);
+		self.last_ans
 	}
 	fn mov(&mut self, m: &G::M) {
 		self.g.mov(m);

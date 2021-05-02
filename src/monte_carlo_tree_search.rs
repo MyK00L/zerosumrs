@@ -102,18 +102,19 @@ impl<G: Game> Ai<G> for MonteCarloTreeSearch<G> {
 	fn turn(&self) -> bool {
 		self.g.turn()
 	}
-	fn get_mov(&mut self, tl: Duration) -> G::M {
+	fn get_mov(&mut self, mut tl: Duration) -> G::M {
 		let start_time = Instant::now();
+		tl-=Duration::from_millis(20);
 		let moves = self.g.get_moves();
 		let mut i = 0;
 		let mut t = std::mem::take(&mut self.tree);
 		let g0 = self.g.clone();
 		loop {
-			for _ in 0..128 {
+			for _ in 0..32 {
 				self.step(&mut t);
 				self.g = g0.clone();
 			}
-			i += 128;
+			i += 32;
 			if start_time.elapsed() > tl {
 				break;
 			}
@@ -121,7 +122,6 @@ impl<G: Game> Ai<G> for MonteCarloTreeSearch<G> {
 		self.tree = std::mem::take(&mut t);
 		let mut best_mov = moves[0];
 		let mut best_val = 0;
-		//let turn = self.g.turn();
 		for (i, t) in self.tree.children.iter().enumerate() {
 			let val = t.vis;
 			if val > best_val {

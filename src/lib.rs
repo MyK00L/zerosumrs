@@ -77,8 +77,10 @@ pub fn compete<G: Game + Display, A: Ai<G>, B: Ai<G>>(tl: Duration) {
 	);
 	let mut a = A::new(true);
 	let mut b = B::new(true);
-	let mut tta = 0;
-	let mut ttb = 0;
+	let mut tta = Duration::ZERO;
+	let mut ttb = Duration::ZERO;
+	let mut mta = Duration::ZERO;
+	let mut mtb = Duration::ZERO;
 	let mut na = 0;
 	let mut nb = 0;
 	while a.state() == State::Going {
@@ -89,10 +91,18 @@ pub fn compete<G: Game + Display, A: Ai<G>, B: Ai<G>>(tl: Duration) {
 		};
 		if a.turn() {
 			na += 1;
-			tta += tts.elapsed().as_millis();
+			let elapsed = tts.elapsed();
+			tta += elapsed;
+			if elapsed > mta {
+				mta=elapsed;
+			}
 		} else {
 			nb += 1;
-			ttb += tts.elapsed().as_millis();
+			let elapsed = tts.elapsed();
+			ttb += elapsed;
+			if elapsed > mtb {
+				mtb=elapsed;
+			}
 		}
 		a.mov(&m);
 		b.mov(&m);
@@ -109,14 +119,24 @@ pub fn compete<G: Game + Display, A: Ai<G>, B: Ai<G>>(tl: Duration) {
 		);
 	}
 	eprintln!(
-		"{} avg think time: {}ms",
+		"{} avg think time: {:?}",
 		std::any::type_name::<A>(),
-		tta as f64 / na as f64
+		tta/na
 	);
 	eprintln!(
-		"{} avg think time: {}ms",
+		"{} max think time: {:?}",
+		std::any::type_name::<A>(),
+		mta
+	);
+	eprintln!(
+		"{} avg think time: {:?}",
 		std::any::type_name::<B>(),
-		ttb as f64 / nb as f64
+		ttb/nb
+	);
+	eprintln!(
+		"{} max think time: {:?}",
+		std::any::type_name::<B>(),
+		mtb
 	);
 	eprintln!(
 		"{}\tvs\t{}",
@@ -135,16 +155,18 @@ mod tests {
 	use crate::ai::*;
 	use crate::game::*;
 	use crate::mancala::*;
-	//use crate::minimax_final::*;
-	//use crate::minimax_hard::*;
-	//use crate::minimax_simple::*;
-	//use crate::monte_carlo_total::*;
-	//use crate::monte_carlo_tree_search::*;
+	use crate::minimax_final::*;
+	use crate::minimax_hard::*;
+	use crate::minimax_simple::*;
+	use crate::monte_carlo_total::*;
+	use crate::monte_carlo_tree_search::*;
 	use crate::othello::*;
 	use crate::random_agent::*;
 	use crate::tablut_with_draw::*;
 	//use crate::tablut::*;
 	use crate::tictactoe::*;
+	use std::time::Duration;
+	use crate::*;
 
 	fn test_rollback<G: Game, A: Ai<G>, B: Ai<G>>() {
 		let mut a = A::new(true);
@@ -184,5 +206,11 @@ mod tests {
 		test_rollback_game::<Ttt>();
 		test_rollback_game::<Tablut>();
 		test_rollback_game::<Othello>();
+	}
+
+	#[test]
+	fn test_times() {
+		compete::<Tablut,MinimaxSimple<Tablut>,MinimaxFinal<Tablut>>(Duration::from_millis(400));
+		compete::<Tablut,MinimaxFinal<Tablut>,MinimaxSimple<Tablut>>(Duration::from_millis(400));
 	}
 }

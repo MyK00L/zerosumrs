@@ -10,7 +10,7 @@ pub enum State {
 	Going,
 }
 pub trait Game: Clone + Debug + Display {
-	type M: Copy + Eq + Debug;
+	type M: Copy + Eq + Debug + Default;
 	type S: Hash + Copy + Eq + Debug;
 	type R: Copy + Debug + Default;
 	fn new(t: bool) -> Self;

@@ -6,12 +6,14 @@ use std::time::Duration;
 
 struct Tree<G: Game> {
 	val: i64,
+	depth: u32,
 	children: Vec<(G::M, Tree<G>)>,
 }
 impl<G: Game> Tree<G> {
 	fn new() -> Self {
 		Self {
 			val: 0,
+			depth: 0,
 			children: vec![],
 		}
 	}
@@ -26,6 +28,10 @@ pub struct MinimaxFinal<G: Game> {
 	pub g: G,
 	cur_depth: u32,
 	tree: Tree<G>,
+	nnw: u8,
+	st: Instant,
+	tl: Duration,
+	ended_early: bool,
 }
 
 impl<G: Game> MinimaxFinal<G> {
@@ -33,12 +39,20 @@ impl<G: Game> MinimaxFinal<G> {
 	fn minimax(&mut self, mut a: i64, mut b: i64, depth: u32, t: &mut Tree<G>) {
 		if self.g.state() != State::Going || depth == 0 {
 			t.val = self.g.heuristic();
+			t.depth = depth;
 			return;
 		}
 		// if win/loss is certain, no need to check again
-		if t.val > 30000 || t.val < -30000 {
+		if t.val > 30000 || t.val < -30000 || t.depth>=depth {
 			return;
 		}
+
+		self.nnw = self.nnw.wrapping_add(1);
+		if self.ended_early || (self.nnw==0 && self.st.elapsed()>self.tl) {
+			self.ended_early = true;
+			return;
+		}
+
 		if t.children.is_empty() {
 			t.children = self
 				.g
@@ -81,6 +95,7 @@ impl<G: Game> MinimaxFinal<G> {
 			}
 		}
 		t.val = if self.g.turn() { a } else { b };
+		t.depth = depth;
 	}
 }
 
@@ -90,6 +105,10 @@ impl<G: Game> Ai<G> for MinimaxFinal<G> {
 			g: G::new(t),
 			tree: Tree::new(),
 			cur_depth: 0,
+			nnw: 0,
+			st: Instant::now(),
+			tl: Duration::ZERO,
+			ended_early: false,
 		}
 	}
 	fn state(&self) -> State {
@@ -102,23 +121,25 @@ impl<G: Game> Ai<G> for MinimaxFinal<G> {
 		self.g.turn()
 	}
 	fn get_mov(&mut self, tl: Duration) -> G::M {
-		let start_time = Instant::now();
+		self.st = Instant::now();
+		self.tl = tl-Duration::from_millis(20);
+		self.ended_early = false;
 		let mut t = take(&mut self.tree);
-		eprintln!("starting at depth {} + 1", self.cur_depth);
-		while t.val > -30000 && t.val < 30000 {
+		while t.val > -30000 && t.val < 30000 &&!self.ended_early {
 			self.cur_depth += 1;
 			self.minimax(i64::MIN, i64::MAX, self.cur_depth, &mut t);
-			if start_time.elapsed()*20 > tl {
-				break;
-			}
+		}
+		if self.ended_early &&  self.cur_depth != 0 {
+			self.cur_depth -= 1;
 		}
 		let ans = t
 			.children
 			.iter()
-			.min_by_key(|x| if self.g.turn() { -x.1.val } else { x.1.val })
+			.max_by_key(|x| (x.1.depth,if self.g.turn() { x.1.val } else { -x.1.val }))
 			.unwrap()
 			.0;
 		self.tree = t;
+		eprintln!("minimax_final depth {}", self.cur_depth);
 		ans
 	}
 	fn mov(&mut self, m: &G::M) {
