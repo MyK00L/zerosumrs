@@ -3,8 +3,8 @@ use crate::game::*;
 use rand::prelude::SliceRandom;
 use rand::*;
 use rand_xoshiro::Xoroshiro128Plus;
-use std::time::Instant;
 use std::time::Duration;
+use std::time::Instant;
 
 pub struct MonteCarloTotal<G: Game> {
 	pub g: G,
@@ -49,7 +49,7 @@ impl<G: Game> Ai<G> for MonteCarloTotal<G> {
 	}
 	fn get_mov(&mut self, mut tl: Duration) -> G::M {
 		let start_time = Instant::now();
-		tl-=Duration::from_millis(20);
+		tl -= Duration::from_millis(20);
 		let moves = self.g.get_moves();
 		let turn = self.g.turn();
 		let mut v = vec![0u32; moves.len()];

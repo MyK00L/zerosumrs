@@ -3,8 +3,8 @@ use crate::game::*;
 use rand::prelude::SliceRandom;
 use rand::*;
 use rand_xoshiro::Xoroshiro128Plus;
-use std::time::Instant;
 use std::time::Duration;
+use std::time::Instant;
 
 struct Tree<G: Game> {
 	wins: u32,
@@ -104,7 +104,7 @@ impl<G: Game> Ai<G> for MonteCarloTreeSearch<G> {
 	}
 	fn get_mov(&mut self, mut tl: Duration) -> G::M {
 		let start_time = Instant::now();
-		tl-=Duration::from_millis(20);
+		tl -= Duration::from_millis(20);
 		let moves = self.g.get_moves();
 		let mut i = 0;
 		let mut t = std::mem::take(&mut self.tree);

@@ -1,7 +1,7 @@
 use crate::ai::Ai;
 use crate::game::*;
-use std::time::Instant;
 use std::time::Duration;
+use std::time::Instant;
 
 pub struct MinimaxSimple<G: Game> {
 	pub g: G,
@@ -19,7 +19,7 @@ impl<G: Game> MinimaxSimple<G> {
 		}
 		let mut res = if self.g.turn() { a } else { b };
 		self.nnw = self.nnw.wrapping_add(1);
-		if self.ended_early || (self.nnw==0 && self.st.elapsed()>self.tl) {
+		if self.ended_early || (self.nnw == 0 && self.st.elapsed() > self.tl) {
 			self.ended_early = true;
 			return res;
 		}
@@ -71,7 +71,7 @@ impl<G: Game> MinimaxSimple<G> {
 		if self.ended_early {
 			true
 		} else {
-			self.last_ans=ans;
+			self.last_ans = ans;
 			false
 		}
 	}
@@ -79,7 +79,14 @@ impl<G: Game> MinimaxSimple<G> {
 
 impl<G: Game> Ai<G> for MinimaxSimple<G> {
 	fn new(t: bool) -> Self {
-		Self { g: G::new(t), nnw: 0, tl: Duration::ZERO, st:Instant::now(), last_ans: G::M::default(), ended_early: false }
+		Self {
+			g: G::new(t),
+			nnw: 0,
+			tl: Duration::ZERO,
+			st: Instant::now(),
+			last_ans: G::M::default(),
+			ended_early: false,
+		}
 	}
 	fn state(&self) -> State {
 		self.g.state()
@@ -92,13 +99,13 @@ impl<G: Game> Ai<G> for MinimaxSimple<G> {
 	}
 	fn get_mov(&mut self, tl: Duration) -> G::M {
 		let mut depth = 1;
-		self.tl = tl-Duration::from_millis(20);
+		self.tl = tl - Duration::from_millis(20);
 		self.st = Instant::now();
 		self.ended_early = false;
 		while !self.minimax_move(depth) {
-			depth+=1;
+			depth += 1;
 		}
-		eprintln!("minimax_simple depth {}",depth-1);
+		eprintln!("minimax_simple depth {}", depth - 1);
 		self.last_ans
 	}
 	fn mov(&mut self, m: &G::M) {

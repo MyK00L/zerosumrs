@@ -1,8 +1,8 @@
 use crate::ai::Ai;
 use crate::game::*;
 use std::collections::HashMap;
-use std::time::Instant;
 use std::time::Duration;
+use std::time::Instant;
 
 pub struct MinimaxHard<G: Game> {
 	pub g: G,

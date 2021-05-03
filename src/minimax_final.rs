@@ -1,8 +1,8 @@
 use crate::ai::Ai;
 use crate::game::*;
 use std::mem::take;
-use std::time::Instant;
 use std::time::Duration;
+use std::time::Instant;
 
 struct Tree<G: Game> {
 	val: i64,
@@ -43,12 +43,12 @@ impl<G: Game> MinimaxFinal<G> {
 			return;
 		}
 		// if win/loss is certain, no need to check again
-		if t.val > 30000 || t.val < -30000 || t.depth>=depth {
+		if t.val > 30000 || t.val < -30000 || t.depth >= depth {
 			return;
 		}
 
 		self.nnw = self.nnw.wrapping_add(1);
-		if self.ended_early || (self.nnw==0 && self.st.elapsed()>self.tl) {
+		if self.ended_early || (self.nnw == 0 && self.st.elapsed() > self.tl) {
 			self.ended_early = true;
 			return;
 		}
@@ -122,20 +122,20 @@ impl<G: Game> Ai<G> for MinimaxFinal<G> {
 	}
 	fn get_mov(&mut self, tl: Duration) -> G::M {
 		self.st = Instant::now();
-		self.tl = tl-Duration::from_millis(20);
+		self.tl = tl - Duration::from_millis(20);
 		self.ended_early = false;
 		let mut t = take(&mut self.tree);
-		while t.val > -30000 && t.val < 30000 &&!self.ended_early {
+		while t.val > -30000 && t.val < 30000 && !self.ended_early {
 			self.cur_depth += 1;
 			self.minimax(i64::MIN, i64::MAX, self.cur_depth, &mut t);
 		}
-		if self.ended_early &&  self.cur_depth != 0 {
+		if self.ended_early && self.cur_depth != 0 {
 			self.cur_depth -= 1;
 		}
 		let ans = t
 			.children
 			.iter()
-			.max_by_key(|x| (x.1.depth,if self.g.turn() { x.1.val } else { -x.1.val }))
+			.max_by_key(|x| (x.1.depth, if self.g.turn() { x.1.val } else { -x.1.val }))
 			.unwrap()
 			.0;
 		self.tree = t;

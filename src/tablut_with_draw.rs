@@ -1,5 +1,5 @@
 use crate::game::*;
-use std::collections::HashSet;
+use rustc_hash::*;
 
 #[derive(Hash, Clone, Copy, PartialEq, Eq, Debug)]
 pub enum Tile {
@@ -151,7 +151,7 @@ pub struct Tablut {
 	board: [u8; 21],
 	pub turn: u32, //%2=0 defender, %2=1 attacker
 	state: State,
-	vis: HashSet<<super::tablut_with_draw::Tablut as Game>::S>,
+	vis: FxHashSet<<super::tablut_with_draw::Tablut as Game>::S>,
 }
 pub fn mapc(x: u8, y: u8) -> u8 {
 	y * 9 + x
@@ -200,7 +200,7 @@ impl Game for Tablut {
 			board: <[u8; 21]>::default(),
 			turn: if t { 0 } else { 1 },
 			state: State::Going,
-			vis: HashSet::new(),
+			vis: FxHashSet::default(),
 		};
 		for y in 0..9 {
 			for x in 0..9 {
@@ -214,7 +214,7 @@ impl Game for Tablut {
 		(self.turn & 1) == 0
 	}
 	fn get_moves(&self) -> Vec<Self::M> {
-		let mut ans = Vec::<Self::M>::new();
+		let mut ans = Vec::<Self::M>::with_capacity(96);
 
 		// right
 		for y in 0..9 {

@@ -1,3 +1,6 @@
+#![feature(test)]
+extern crate test;
+
 pub mod ai;
 pub mod game;
 pub mod mancala;
@@ -18,8 +21,8 @@ use rand::prelude::SliceRandom;
 use rand::*;
 use rand_xoshiro::Xoroshiro128Plus;
 use std::fmt::Display;
-use std::time::Instant;
 use std::time::Duration;
+use std::time::Instant;
 
 fn random_play<G: Game>() -> (State, usize) {
 	let mut rng = Xoroshiro128Plus::from_rng(rand::thread_rng()).unwrap();
@@ -94,14 +97,14 @@ pub fn compete<G: Game + Display, A: Ai<G>, B: Ai<G>>(tl: Duration) {
 			let elapsed = tts.elapsed();
 			tta += elapsed;
 			if elapsed > mta {
-				mta=elapsed;
+				mta = elapsed;
 			}
 		} else {
 			nb += 1;
 			let elapsed = tts.elapsed();
 			ttb += elapsed;
 			if elapsed > mtb {
-				mtb=elapsed;
+				mtb = elapsed;
 			}
 		}
 		a.mov(&m);
@@ -121,23 +124,15 @@ pub fn compete<G: Game + Display, A: Ai<G>, B: Ai<G>>(tl: Duration) {
 	eprintln!(
 		"{} avg think time: {:?}",
 		std::any::type_name::<A>(),
-		tta/na
+		tta / na
 	);
-	eprintln!(
-		"{} max think time: {:?}",
-		std::any::type_name::<A>(),
-		mta
-	);
+	eprintln!("{} max think time: {:?}", std::any::type_name::<A>(), mta);
 	eprintln!(
 		"{} avg think time: {:?}",
 		std::any::type_name::<B>(),
-		ttb/nb
+		ttb / nb
 	);
-	eprintln!(
-		"{} max think time: {:?}",
-		std::any::type_name::<B>(),
-		mtb
-	);
+	eprintln!("{} max think time: {:?}", std::any::type_name::<B>(), mtb);
 	eprintln!(
 		"{}\tvs\t{}",
 		std::any::type_name::<A>(),
@@ -165,8 +160,8 @@ mod tests {
 	use crate::tablut_with_draw::*;
 	//use crate::tablut::*;
 	use crate::tictactoe::*;
-	use std::time::Duration;
 	use crate::*;
+	use std::time::Duration;
 
 	fn test_rollback<G: Game, A: Ai<G>, B: Ai<G>>() {
 		let mut a = A::new(true);
@@ -210,7 +205,13 @@ mod tests {
 
 	#[test]
 	fn test_times() {
-		compete::<Tablut,MinimaxSimple<Tablut>,MinimaxFinal<Tablut>>(Duration::from_millis(400));
-		compete::<Tablut,MinimaxFinal<Tablut>,MinimaxSimple<Tablut>>(Duration::from_millis(400));
+		compete::<Tablut, MinimaxSimple<Tablut>, MinimaxFinal<Tablut>>(Duration::from_millis(400));
+		compete::<Tablut, MinimaxFinal<Tablut>, MinimaxSimple<Tablut>>(Duration::from_millis(400));
+	}
+
+	use test::Bencher;
+	#[bench]
+	fn bench_add_two(b: &mut Bencher) {
+		b.iter(|| super::random_play::<Tablut>());
 	}
 }
