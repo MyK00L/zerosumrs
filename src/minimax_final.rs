@@ -6,7 +6,7 @@ use std::time::Instant;
 
 struct Tree<G: Game> {
 	val: i64,
-	depth: u32,
+	depth: u32, // depth minimum is 1, 0=unvisited
 	children: Vec<(G::M, Tree<G>)>,
 }
 impl<G: Game> Tree<G> {
@@ -37,18 +37,20 @@ pub struct MinimaxFinal<G: Game> {
 impl<G: Game> MinimaxFinal<G> {
 	// assumes to be called with depth always increased by 1 relative to Tree
 	fn minimax(&mut self, mut a: i64, mut b: i64, depth: u32, t: &mut Tree<G>) {
-		if self.g.state() != State::Going || depth == 0 {
-			t.val = self.g.heuristic();
+		// if win/loss is certain, no need to check again
+		if t.val < -30000 || t.val > 30000 || t.depth == depth {
 			t.depth = depth;
 			return;
 		}
-		// if win/loss is certain, no need to check again
-		if t.val > 30000 || t.val < -30000 || t.depth >= depth {
+		if self.g.state() != State::Going || depth == 1 {
+			if t.depth == 0 {
+				t.val = self.g.heuristic();
+			}
+			t.depth = depth;
 			return;
 		}
-
 		self.nnw = self.nnw.wrapping_add(1);
-		if self.ended_early || (self.nnw == 0 && self.st.elapsed() > self.tl) {
+		if self.nnw == 0 && self.st.elapsed() > self.tl {
 			self.ended_early = true;
 			return;
 		}
@@ -60,17 +62,12 @@ impl<G: Game> MinimaxFinal<G> {
 				.iter()
 				.map(|x| (*x, Tree::<G>::new()))
 				.collect();
+		} else if self.g.turn() {
+			t.children.sort_by_key(|x| (u32::MAX - x.1.depth, -x.1.val));
 		} else {
-			t.children
-				.sort_unstable_by_key(|x| if self.g.turn() { -x.1.val } else { x.1.val });
+			t.children.sort_by_key(|x| (u32::MAX - x.1.depth, x.1.val));
 		}
-		// where 42 is maximum change of heuristic in a turn
-		// this is bug, pls help
-		/*if self.g.turn() {
-			a = a.max(t.val-42);
-		} else {
-			b = b.min(t.val+42);
-		}*/
+
 		if self.g.turn() {
 			for c in t.children.iter_mut() {
 				let rb = self.g.mov_with_rollback(&c.0);
@@ -78,9 +75,13 @@ impl<G: Game> MinimaxFinal<G> {
 				let h = c.1.val;
 				self.g.rollback(rb);
 				a = a.max(h);
-				if a >= b {
+				if a >= b || self.ended_early {
 					break;
 				}
+			}
+			if !self.ended_early {
+				t.val = a;
+				t.depth = depth;
 			}
 		} else {
 			for c in t.children.iter_mut() {
@@ -89,13 +90,15 @@ impl<G: Game> MinimaxFinal<G> {
 				let h = c.1.val;
 				self.g.rollback(rb);
 				b = b.min(h);
-				if a >= b {
+				if a >= b || self.ended_early {
 					break;
 				}
 			}
+			if !self.ended_early {
+				t.val = b;
+				t.depth = depth;
+			}
 		}
-		t.val = if self.g.turn() { a } else { b };
-		t.depth = depth;
 	}
 }
 
@@ -104,7 +107,7 @@ impl<G: Game> Ai<G> for MinimaxFinal<G> {
 		Self {
 			g: G::new(t),
 			tree: Tree::new(),
-			cur_depth: 0,
+			cur_depth: 1,
 			nnw: 0,
 			st: Instant::now(),
 			tl: Duration::ZERO,
@@ -129,17 +132,21 @@ impl<G: Game> Ai<G> for MinimaxFinal<G> {
 			self.cur_depth += 1;
 			self.minimax(i64::MIN, i64::MAX, self.cur_depth, &mut t);
 		}
-		if self.ended_early && self.cur_depth != 0 {
+		if self.ended_early && self.cur_depth != 1 {
 			self.cur_depth -= 1;
 		}
-		let ans = t
-			.children
-			.iter()
-			.max_by_key(|x| (x.1.depth, if self.g.turn() { x.1.val } else { -x.1.val }))
-			.unwrap()
-			.0;
+		if self.g.turn() {
+			t.children.sort_by_key(|x| (u32::MAX - x.1.depth, -x.1.val));
+		} else {
+			t.children.sort_by_key(|x| (u32::MAX - x.1.depth, x.1.val));
+		}
+		let ans = t.children[0].0;
 		self.tree = t;
-		eprintln!("minimax_final depth {}", self.cur_depth);
+		eprintln!(
+			"minimax_final depth {}, val {}",
+			self.cur_depth - 1,
+			self.tree.val
+		);
 		ans
 	}
 	fn mov(&mut self, m: &G::M) {
@@ -150,7 +157,7 @@ impl<G: Game> Ai<G> for MinimaxFinal<G> {
 				break;
 			}
 		}
-		if self.cur_depth != 0 {
+		if self.cur_depth != 1 {
 			self.cur_depth -= 1;
 		}
 		self.g.mov(m);

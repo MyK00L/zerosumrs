@@ -86,6 +86,7 @@ pub fn compete<G: Game + Display, A: Ai<G>, B: Ai<G>>(tl: Duration) {
 	let mut mtb = Duration::ZERO;
 	let mut na = 0;
 	let mut nb = 0;
+	a.print2game();
 	while a.state() == State::Going {
 		let tts = Instant::now();
 		let m = match a.turn() {
@@ -205,13 +206,13 @@ mod tests {
 
 	#[test]
 	fn test_times() {
-		compete::<Tablut, MinimaxSimple<Tablut>, MinimaxFinal<Tablut>>(Duration::from_millis(400));
-		compete::<Tablut, MinimaxFinal<Tablut>, MinimaxSimple<Tablut>>(Duration::from_millis(400));
+		compete::<Tablut, MinimaxSimple<Tablut>, MinimaxFinal<Tablut>>(Duration::from_millis(5000));
+		compete::<Tablut, MinimaxFinal<Tablut>, MinimaxSimple<Tablut>>(Duration::from_millis(5000));
 	}
 
 	use test::Bencher;
 	#[bench]
-	fn bench_add_two(b: &mut Bencher) {
+	fn bench_tablut(b: &mut Bencher) {
 		b.iter(|| super::random_play::<Tablut>());
 	}
 }
