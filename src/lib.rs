@@ -6,6 +6,7 @@ pub mod game;
 pub mod mancala;
 pub mod minimax_final;
 pub mod minimax_hard;
+pub mod minimax_killer;
 pub mod minimax_simple;
 pub mod monte_carlo_total;
 pub mod monte_carlo_tree_search;
@@ -153,6 +154,7 @@ mod tests {
 	use crate::mancala::*;
 	use crate::minimax_final::*;
 	use crate::minimax_hard::*;
+	use crate::minimax_killer::*;
 	use crate::minimax_simple::*;
 	use crate::monte_carlo_total::*;
 	use crate::monte_carlo_tree_search::*;
@@ -206,8 +208,8 @@ mod tests {
 
 	#[test]
 	fn test_times() {
-		compete::<Tablut, MinimaxSimple<Tablut>, MinimaxFinal<Tablut>>(Duration::from_millis(5000));
-		compete::<Tablut, MinimaxFinal<Tablut>, MinimaxSimple<Tablut>>(Duration::from_millis(5000));
+		compete::<Tablut, MinimaxFinal<Tablut>, MinimaxKiller<Tablut>>(Duration::from_secs(2));
+		compete::<Tablut, MinimaxKiller<Tablut>, MinimaxFinal<Tablut>>(Duration::from_secs(2));
 	}
 
 	use test::Bencher;

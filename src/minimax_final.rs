@@ -62,6 +62,7 @@ impl<G: Game> MinimaxFinal<G> {
 				.iter()
 				.map(|x| (*x, Tree::<G>::new()))
 				.collect();
+			t.children.shrink_to_fit();
 		} else if self.g.turn() {
 			t.children.sort_by_key(|x| (u32::MAX - x.1.depth, -x.1.val));
 		} else {
