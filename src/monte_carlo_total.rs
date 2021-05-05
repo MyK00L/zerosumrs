@@ -54,7 +54,7 @@ impl<G: Game> Ai<G> for MonteCarloTotal<G> {
 		let mut i = 0;
 		let g0 = self.g;
 		loop {
-			if start_time.elapsed().unwrap().as_millis() > 250 {
+			if start_time.elapsed().unwrap().as_secs() > 1 {
 				break;
 			}
 			i += 1;

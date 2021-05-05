@@ -336,23 +336,23 @@ impl Game for Tablut {
 					turn: self.turn,
 					state: State::Going,
 				};
-				for _ in 0..2 {
-					for i in gc.get_moves() {
-						match gc.get(i.0) {
-							Tile::D => {
-								md += 1;
-							}
-							Tile::K => {
-								mk += 1;
-							}
-							Tile::A => {
-								ma += 1;
-							}
-							_ => {}
-						}
-					}
-					gc.turn ^= 1;
-				}
+				// for _ in 0..2 {
+				// 	for i in gc.get_moves() {
+				// 		match gc.get(i.0) {
+				// 			Tile::D => {
+				// 				md += 1;
+				// 			}
+				// 			Tile::K => {
+				// 				mk += 1;
+				// 			}
+				// 			Tile::A => {
+				// 				ma += 1;
+				// 			}
+				// 			_ => {}
+				// 		}
+				// 	}
+				// 	gc.turn ^= 1;
+				// }
 				nd * 6 - na * 3 - ma + 2 * md + 4 * mk
 			}
 		}

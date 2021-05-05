@@ -1,15 +1,22 @@
 use crate::ai::Ai;
 use crate::game::*;
 use crate::minimax_simple::MinimaxSimple;
-use rand::prelude::SliceRandom;
 use rand::*;
 use rand_xoshiro::Xoroshiro128Plus;
 use std::time::SystemTime;
+
+#[derive(PartialEq, Copy, Clone, Debug)]
+enum Shure {
+	No,
+	Win,
+	Loss,
+}
 
 struct Tree<G: Game> {
 	wins: f32,
 	vis: f32,
 	movs: Vec<G::M>,
+	shure: Shure,
 	children: Vec<Tree<G>>,
 }
 impl<G: Game> Tree<G> {
@@ -19,6 +26,7 @@ impl<G: Game> Tree<G> {
 			vis: 0.0,
 			movs: vec![],
 			children: vec![],
+			shure: Shure::No,
 		}
 	}
 }
@@ -32,7 +40,7 @@ pub struct MonteCarloTreeSearch<G: Game> {
 	pub g: G,
 	rng: Xoroshiro128Plus,
 	tree: Tree<G>,
-	games: HashMap<G::S, f32>,
+	games: HashMap<G::S, (f32, Shure)>,
 	hits: u32,
 	tot: u32,
 }
@@ -45,7 +53,7 @@ impl<G: Game> MonteCarloTreeSearch<G> {
 			_ => 0.5,
 		}
 	}
-	fn explore_branch(&mut self) -> f32 {
+	fn explore_branch(&mut self) -> (f32, Shure) {
 		//println!("game started {:?}", self.g.state());
 		let mut a = MinimaxSimple::new_with_game(self.g);
 		let mut b = MinimaxSimple::new_with_game(self.g);
@@ -56,6 +64,7 @@ impl<G: Game> MonteCarloTreeSearch<G> {
 			self.hits += 1;
 			return *res;
 		}
+		//println!("{} {}", init, init.turn());
 		while a.state() == State::Going {
 			let m = match a.turn() {
 				true => a.get_mov_with_fixed_depth(2),
@@ -68,38 +77,49 @@ impl<G: Game> MonteCarloTreeSearch<G> {
 			if i > 50 {
 				//println!("Game finished draw");
 				let res = self.result_u32(State::Draw);
-				self.games.insert(init.get_static_state(), res);
-				return res;
+				self.games.insert(init.get_static_state(), (res, Shure::No));
+				return (res, Shure::No);
 			}
-			// if a.state() != b.state() {
-			// 	panic!("{:?}, {:?}", a.state(), b.state());
-			// }
+			if a.state() != b.state() {
+				panic!("{:?}, {:?}", a.state(), b.state());
+			}
 		}
-		let res = self.result_u32(a.state());
-		self.games.insert(init.get_static_state(), res);
-		//println!("game finished {:?}", i);
-		self.result_u32(a.state())
+		let res = self.result_u32(b.state());
+		let shure = match (b.state(), i) {
+			(State::Win, i) if i <= 2 => Shure::Win,
+			(State::Lose, i) if i <= 2 => Shure::Loss,
+			_ => Shure::No,
+		};
+		self.games.insert(init.get_static_state(), (res, shure));
+		//println!("game finished {:?} {:?}", i, a.state());
+		(self.result_u32(b.state()), shure)
 	}
 	fn step(&mut self, t: &mut Tree<G>) -> f32 {
 		let turn = self.g.turn();
 		if self.g.state() != State::Going || t.vis as u32 == 0 {
+			let (mc, sh) = self.explore_branch();
 			t.vis += 1.0;
-			let mc = self.explore_branch();
 			t.wins += mc;
+			t.shure = sh;
 			return mc;
 		}
 		if t.movs.is_empty() {
 			t.movs = self.g.get_moves();
 		}
+		let mut best_val = 0.0f32;
 		let movi = if t.children.len() < t.movs.len() {
 			t.children.push(Tree::<G>::new());
 			t.children.len() - 1
 		} else {
-			let mut best_val = 0.0f32;
 			let mut ans = 0;
 			for (i, x) in t.children.iter().enumerate() {
-				let val = (if turn { x.wins } else { x.vis - x.wins }) as f32 / x.vis as f32
+				let mut val = (if turn { x.wins } else { x.vis - x.wins }) as f32 / x.vis as f32
 					+ 1.3 * ((t.vis as f32).ln() / (x.vis as f32)).sqrt();
+
+				if t.shure != Shure::No {
+					val = f32::MIN;
+				}
+
 				if val > best_val {
 					best_val = val;
 					ans = i;
@@ -111,6 +131,16 @@ impl<G: Game> MonteCarloTreeSearch<G> {
 		let x = self.step(&mut t.children[movi]);
 		t.wins += x;
 		t.vis += 1.0;
+		let all_win =
+			t.children.len() == t.movs.len() && t.children.iter().all(|x| x.shure == Shure::Win);
+		let all_lose =
+			t.children.len() == t.movs.len() && t.children.iter().all(|x| x.shure == Shure::Loss);
+		if all_win {
+			t.shure = Shure::Win;
+		}
+		if all_lose {
+			t.shure = Shure::Loss;
+		}
 		x
 	}
 }
@@ -148,7 +178,7 @@ impl<G: Game> Ai<G> for MonteCarloTreeSearch<G> {
 			}
 			i += 128;
 			self.tot += 128;
-			if start_time.elapsed().unwrap().as_secs() > 1 {
+			if start_time.elapsed().unwrap().as_secs() > 60 {
 				break;
 			}
 		}
@@ -169,22 +199,29 @@ impl<G: Game> Ai<G> for MonteCarloTreeSearch<G> {
 			print!("{}/{} ", t.1 as u32, t.0 as u32);
 		}
 		println!();
+		let turn = self.g.turn();
 		for (i, t) in self.tree.children.iter().enumerate() {
-			let val = t.vis as u32;
+			let mut val = t.vis as u32;
+			match (t.shure, turn) {
+				(Shure::Win, true) => val = u32::MAX,
+				(Shure::Win, false) => val = u32::MIN,
+				(Shure::Loss, true) => val = u32::MIN,
+				(Shure::Loss, false) => val = u32::MAX,
+				_ => (),
+			}
+			if val == 0 {
+				println!("skipping due to sure loss");
+			}
 			if val > best_val {
+				println!("{:?}", t.shure);
 				best_val = val;
 				p = t.wins as u32;
 				best_mov = self.tree.movs[i];
 			}
-			let rb = self.g.mov_with_rollback(&self.tree.movs[i]);
-			if self.g.state() == State::Win {
-				best_val = u32::MAX;
-				best_mov = self.tree.movs[i];
-			}
-			self.g.rollback(rb);
 		}
 		eprintln!(
-			"monte_carlo_tree_search chose move in {} milliseconds with {} iterations | cache: {}/{} | prob: {}/{}",
+			"{} | monte_carlo_tree_search chose move in {} milliseconds with {} iterations | cache: {}/{} | prob: {}/{}",
+			best_val,
 			start_time.elapsed().unwrap().as_millis(),
 			i,
 			self.hits,

@@ -194,6 +194,6 @@ fn tablut_test() {
 }
 
 fn main() {
-	let x = compete::<Tablut, MonteCarloTotal<Tablut>, MonteCarloTreeSearch<Tablut>>();
+	let x = compete::<Tablut, MinimaxSimple<Tablut>, MonteCarloTreeSearch<Tablut>>();
 	eprintln!("{:?}", x);
 }
