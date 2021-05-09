@@ -92,7 +92,7 @@ impl<G: Game> MonteCarloTreeSearch<G> {
 		};
 		self.games.insert(init.get_static_state(), (res, shure));
 		//println!("game finished {:?} {:?}", i, a.state());
-		(self.result_u32(b.state()), shure)
+		(res, shure)
 	}
 	fn step(&mut self, t: &mut Tree<G>) -> f32 {
 		let turn = self.g.turn();
@@ -178,7 +178,7 @@ impl<G: Game> Ai<G> for MonteCarloTreeSearch<G> {
 			}
 			i += 128;
 			self.tot += 128;
-			if start_time.elapsed().unwrap().as_secs() > 60 {
+			if start_time.elapsed().unwrap().as_secs() > 60 * 10 {
 				break;
 			}
 		}
@@ -211,6 +211,9 @@ impl<G: Game> Ai<G> for MonteCarloTreeSearch<G> {
 			}
 			if val == 0 {
 				println!("skipping due to sure loss");
+				let mut cc = self.g;
+				cc.mov(&self.tree.movs[i]);
+				//println!("{}", cc);
 			}
 			if val > best_val {
 				println!("{:?}", t.shure);
@@ -243,6 +246,8 @@ impl<G: Game> Ai<G> for MonteCarloTreeSearch<G> {
 		}
 		if t.children.len() > movi {
 			self.tree = std::mem::take(&mut t.children[movi])
+		} else {
+			println!("adddddddd");
 		}
 	}
 }
