@@ -20,11 +20,10 @@ impl<G: Game, H: Heuristic<G>> MinimaxSimple<G, H> {
 		if self.g.state() != State::Going || depth == 0 {
 			return H::eval(&self.g);
 		}
-		let mut res = if self.g.turn() { a } else { b };
 		self.nnw = self.nnw.wrapping_add(1);
 		if self.ended_early || (self.nnw == 0 && self.st.elapsed() > self.tl) {
 			self.ended_early = true;
-			return res;
+			return if self.g.turn() { a } else { b };
 		}
 		let moves = self.g.get_moves_sorted();
 		for m in moves.iter() {
@@ -32,40 +31,35 @@ impl<G: Game, H: Heuristic<G>> MinimaxSimple<G, H> {
 			let h = self.minimax(a, b, depth - 1);
 			self.g.rollback(rb);
 			if self.g.turn() {
-				res = res.max(h);
 				a = a.max(h);
 			} else {
-				res = res.min(h);
 				b = b.min(h);
 			}
 			if a >= b || self.ended_early {
 				break;
 			}
 		}
-		res
+		if self.g.turn() { a } else { b }
 	}
 	fn minimax_move(&mut self, depth: u32) -> bool {
 		let mut a = i64::MIN;
 		let mut b = i64::MAX;
 		let moves = self.g.get_moves_sorted();
-		let mut res = if self.g.turn() { a } else { b };
 		let mut ans = moves[0];
 		for m in moves.iter() {
 			let rb = self.g.mov_with_rollback(m);
 			let h = self.minimax(a, b, depth - 1);
 			self.g.rollback(rb);
 			if self.g.turn() {
-				if h > res {
-					res = h;
+				if h > a {
+					a = h;
 					ans = *m;
 				}
-				a = a.max(h);
 			} else {
-				if h < res {
-					res = h;
+				if h < b {
+					b = h;
 					ans = *m;
 				}
-				b = b.min(h);
 			}
 			if a >= b || self.ended_early {
 				break;
