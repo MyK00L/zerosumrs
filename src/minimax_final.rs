@@ -1,5 +1,7 @@
 use crate::ai::Ai;
 use crate::game::*;
+use crate::heuristic::Heuristic;
+use std::marker::PhantomData;
 use std::mem::take;
 use std::time::Duration;
 use std::time::Instant;
@@ -24,7 +26,7 @@ impl<G: Game> Default for Tree<G> {
 	}
 }
 
-pub struct MinimaxFinal<G: Game> {
+pub struct MinimaxFinal<G: Game, H: Heuristic<G>> {
 	pub g: G,
 	cur_depth: u32,
 	tree: Tree<G>,
@@ -32,9 +34,10 @@ pub struct MinimaxFinal<G: Game> {
 	st: Instant,
 	tl: Duration,
 	ended_early: bool,
+	_ph: PhantomData<H>,
 }
 
-impl<G: Game> MinimaxFinal<G> {
+impl<G: Game, H: Heuristic<G>> MinimaxFinal<G, H> {
 	// assumes to be called with depth always increased by 1 relative to Tree
 	fn minimax(&mut self, mut a: i64, mut b: i64, depth: u32, t: &mut Tree<G>) {
 		// if win/loss is certain, no need to check again
@@ -44,7 +47,7 @@ impl<G: Game> MinimaxFinal<G> {
 		}
 		if self.g.state() != State::Going || depth == 1 {
 			if t.depth == 0 {
-				t.val = self.g.heuristic();
+				t.val = H::eval(&self.g);
 			}
 			t.depth = depth;
 			return;
@@ -103,7 +106,7 @@ impl<G: Game> MinimaxFinal<G> {
 	}
 }
 
-impl<G: Game> Ai<G> for MinimaxFinal<G> {
+impl<G: Game, H: Heuristic<G>> Ai<G> for MinimaxFinal<G, H> {
 	fn new(t: bool) -> Self {
 		Self {
 			g: G::new(t),
@@ -113,6 +116,7 @@ impl<G: Game> Ai<G> for MinimaxFinal<G> {
 			st: Instant::now(),
 			tl: Duration::ZERO,
 			ended_early: false,
+			_ph: PhantomData,
 		}
 	}
 	fn state(&self) -> State {

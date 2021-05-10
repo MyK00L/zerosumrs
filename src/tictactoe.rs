@@ -1,16 +1,16 @@
 use crate::game::*;
 
 #[derive(Debug, Hash, Clone, Copy, PartialEq, Eq)]
-pub struct Ttt {
+pub struct Tictactoe {
 	a: [u8; 9],
 	turn: bool,
 }
-impl Game for Ttt {
+impl Game for Tictactoe {
 	type M = u8;
 	type S = ([u8; 9], bool);
 	type R = u8;
 	fn new(t: bool) -> Self {
-		Ttt {
+		Tictactoe {
 			a: [2, 2, 2, 2, 2, 2, 2, 2, 2],
 			turn: t,
 		}
@@ -71,14 +71,6 @@ impl Game for Ttt {
 			State::Going
 		}
 	}
-	fn heuristic(&self) -> i64 {
-		let s = self.state();
-		match s {
-			State::Win => 1,
-			State::Lose => -1,
-			_ => 0,
-		}
-	}
 	fn mov(&mut self, m: &Self::M) {
 		self.a[*m as usize] = if self.turn { 1 } else { 0 };
 		self.turn = !self.turn;
@@ -92,7 +84,7 @@ impl Game for Ttt {
 		self.turn = !self.turn;
 	}
 }
-impl std::fmt::Display for Ttt {
+impl std::fmt::Display for Tictactoe {
 	fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
 		for y in 0..3 {
 			for x in 0..3 {

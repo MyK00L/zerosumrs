@@ -1,21 +1,24 @@
 use crate::ai::Ai;
 use crate::game::*;
+use crate::heuristic::Heuristic;
+use std::marker::PhantomData;
 use std::time::Duration;
 use std::time::Instant;
 
-pub struct MinimaxSimple<G: Game> {
+pub struct MinimaxSimple<G: Game, H: Heuristic<G>> {
 	pub g: G,
 	nnw: u8,
 	tl: Duration,
 	st: Instant,
 	last_ans: G::M,
 	ended_early: bool,
+	_ph: PhantomData<H>,
 }
 
-impl<G: Game> MinimaxSimple<G> {
+impl<G: Game, H: Heuristic<G>> MinimaxSimple<G, H> {
 	fn minimax(&mut self, mut a: i64, mut b: i64, depth: u32) -> i64 {
 		if self.g.state() != State::Going || depth == 0 {
-			return self.g.heuristic();
+			return H::eval(&self.g);
 		}
 		let mut res = if self.g.turn() { a } else { b };
 		self.nnw = self.nnw.wrapping_add(1);
@@ -77,7 +80,7 @@ impl<G: Game> MinimaxSimple<G> {
 	}
 }
 
-impl<G: Game> Ai<G> for MinimaxSimple<G> {
+impl<G: Game, H: Heuristic<G>> Ai<G> for MinimaxSimple<G, H> {
 	fn new(t: bool) -> Self {
 		Self {
 			g: G::new(t),
@@ -86,6 +89,7 @@ impl<G: Game> Ai<G> for MinimaxSimple<G> {
 			st: Instant::now(),
 			last_ans: G::M::default(),
 			ended_early: false,
+			_ph: PhantomData,
 		}
 	}
 	fn state(&self) -> State {

@@ -30,10 +30,10 @@ impl Othello {
 	fn flip(&mut self, p: u8) {
 		self.board.1 ^= 1u64 << p;
 	}
-	fn has_piece(&self, p: u8) -> bool {
+	pub fn has_piece(&self, p: u8) -> bool {
 		(self.board.0 >> p) & 1 != 0
 	}
-	fn get_piece(&self, p: u8) -> bool {
+	pub fn get_piece(&self, p: u8) -> bool {
 		(self.board.1 >> p) & 1 != 0
 	}
 	// if can reverse in a certain directon from pos with a direction dir
@@ -125,28 +125,6 @@ impl Game for Othello {
 				0..=31 => State::Lose,
 				32 => State::Draw,
 				_ => State::Win,
-			}
-		}
-	}
-	fn heuristic(&self) -> i64 {
-		match self.state() {
-			State::Lose => -32768,
-			State::Win => 32768,
-			State::Draw => 0,
-			State::Going => {
-				let mut ans = 0i64;
-				for i in 0..64 {
-					ans += if self.has_piece(i) {
-						if self.get_piece(i) {
-							WEIGHTS[i as usize]
-						} else {
-							-WEIGHTS[i as usize]
-						}
-					} else {
-						0
-					};
-				}
-				ans
 			}
 		}
 	}

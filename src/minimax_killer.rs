@@ -1,10 +1,12 @@
 use crate::ai::Ai;
 use crate::game::*;
+use crate::heuristic::Heuristic;
 use std::collections::VecDeque;
+use std::marker::PhantomData;
 use std::time::Duration;
 use std::time::Instant;
 
-pub struct MinimaxKiller<G: Game> {
+pub struct MinimaxKiller<G: Game, H: Heuristic<G>> {
 	pub g: G,
 	nnw: u8,
 	tl: Duration,
@@ -12,12 +14,13 @@ pub struct MinimaxKiller<G: Game> {
 	best_mov: VecDeque<G::M>,
 	ended_early: bool,
 	cur_depth: u32,
+	_ph: PhantomData<H>,
 }
 
-impl<G: Game> MinimaxKiller<G> {
+impl<G: Game, H: Heuristic<G>> MinimaxKiller<G, H> {
 	fn minimax(&mut self, mut a: i64, mut b: i64, depth: u32, best: bool) -> i64 {
 		if self.g.state() != State::Going || depth == 0 {
-			return self.g.heuristic();
+			return H::eval(&self.g);
 		}
 		self.nnw = self.nnw.wrapping_add(1);
 		if self.ended_early || (self.nnw == 0 && self.st.elapsed() > self.tl) {
@@ -71,7 +74,7 @@ impl<G: Game> MinimaxKiller<G> {
 	}
 }
 
-impl<G: Game> Ai<G> for MinimaxKiller<G> {
+impl<G: Game, H: Heuristic<G>> Ai<G> for MinimaxKiller<G, H> {
 	fn new(t: bool) -> Self {
 		let mut vd = VecDeque::with_capacity(8);
 		vd.push_back(G::M::default());
@@ -83,6 +86,7 @@ impl<G: Game> Ai<G> for MinimaxKiller<G> {
 			best_mov: vd,
 			ended_early: false,
 			cur_depth: 0,
+			_ph: PhantomData,
 		}
 	}
 	fn state(&self) -> State {

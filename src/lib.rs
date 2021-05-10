@@ -2,7 +2,9 @@
 extern crate test;
 
 pub mod ai;
+pub mod default_heuristic;
 pub mod game;
+pub mod heuristic;
 pub mod mancala;
 pub mod minimax_final;
 pub mod minimax_hard;
@@ -12,8 +14,7 @@ pub mod monte_carlo_total;
 pub mod monte_carlo_tree_search;
 pub mod othello;
 pub mod random_agent;
-pub mod tablut_with_draw;
-//pub mod tablut;
+pub mod tablut;
 pub mod tictactoe;
 
 use crate::ai::*;
@@ -150,6 +151,7 @@ pub fn compete<G: Game + Display, A: Ai<G>, B: Ai<G>>(tl: Duration) {
 #[cfg(test)]
 mod tests {
 	use crate::ai::*;
+	use crate::default_heuristic::*;
 	use crate::game::*;
 	use crate::mancala::*;
 	use crate::minimax_final::*;
@@ -160,8 +162,7 @@ mod tests {
 	use crate::monte_carlo_tree_search::*;
 	use crate::othello::*;
 	use crate::random_agent::*;
-	use crate::tablut_with_draw::*;
-	//use crate::tablut::*;
+	use crate::tablut::*;
 	use crate::tictactoe::*;
 	use crate::*;
 	use std::time::Duration;
@@ -201,15 +202,23 @@ mod tests {
 	#[test]
 	fn rollbacks_test() {
 		test_rollback_game::<Mancala>();
-		test_rollback_game::<Ttt>();
+		test_rollback_game::<Tictactoe>();
 		test_rollback_game::<Tablut>();
 		test_rollback_game::<Othello>();
 	}
 
 	#[test]
 	fn test_times() {
-		compete::<Tablut, MinimaxFinal<Tablut>, MinimaxKiller<Tablut>>(Duration::from_secs(2));
-		compete::<Tablut, MinimaxKiller<Tablut>, MinimaxFinal<Tablut>>(Duration::from_secs(2));
+		compete::<
+			Tablut,
+			MinimaxSimple<Tablut, DefaultHeuristic>,
+			MinimaxKiller<Tablut, DefaultHeuristic>,
+		>(Duration::from_millis(300));
+		compete::<
+			Tablut,
+			MinimaxKiller<Tablut, DefaultHeuristic>,
+			MinimaxSimple<Tablut, DefaultHeuristic>,
+		>(Duration::from_millis(300));
 	}
 
 	use test::Bencher;

@@ -1,18 +1,21 @@
 use crate::ai::Ai;
 use crate::game::*;
+use crate::heuristic::Heuristic;
 use std::collections::HashMap;
+use std::marker::PhantomData;
 use std::time::Duration;
 use std::time::Instant;
 
-pub struct MinimaxHard<G: Game> {
+pub struct MinimaxHard<G: Game, H: Heuristic<G>> {
 	pub g: G,
 	table: HashMap<G::S, (i64, u32)>,
+	_ph: PhantomData<H>,
 }
 
-impl<G: Game> MinimaxHard<G> {
+impl<G: Game, H: Heuristic<G>> MinimaxHard<G, H> {
 	fn minimax(&mut self, mut a: i64, mut b: i64, depth: u32) -> i64 {
 		if self.g.state() != State::Going || depth == 0 {
-			return self.g.heuristic();
+			return H::eval(&self.g);
 		}
 		let mut old_depth = 0;
 		if let Some(x) = self.table.get(&self.g.get_static_state()) {
@@ -115,11 +118,12 @@ impl<G: Game> MinimaxHard<G> {
 	}
 }
 
-impl<G: Game> Ai<G> for MinimaxHard<G> {
+impl<G: Game, H: Heuristic<G>> Ai<G> for MinimaxHard<G, H> {
 	fn new(t: bool) -> Self {
 		Self {
 			g: G::new(t),
 			table: HashMap::new(),
+			_ph: PhantomData,
 		}
 	}
 	fn state(&self) -> State {

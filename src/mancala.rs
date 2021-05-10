@@ -3,7 +3,7 @@ use std::cmp::Ordering;
 
 #[derive(Debug, Hash, Clone, Copy, PartialEq, Eq)]
 pub struct Mancala {
-	a: [u8; 14],
+	pub a: [u8; 14],
 	turn: bool,
 }
 
@@ -61,21 +61,6 @@ impl Game for Mancala {
 			State::Lose
 		} else {
 			State::Going
-		}
-	}
-	fn heuristic(&self) -> i64 {
-		let s = self.state();
-		let w: [i64; 14] = [7, 6, 5, 4, 3, 2, 8, -7, -6, -5, -4, -3, -2, -8];
-		match s {
-			State::Win => 32768,
-			State::Lose => -32768,
-			_ => {
-				let mut res = 0i64;
-				for (i, wi) in w.iter().enumerate() {
-					res += wi * self.a[i] as i64;
-				}
-				res
-			}
 		}
 	}
 	fn get_static_state(&self) -> ([u8; 14], bool) {
