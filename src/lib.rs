@@ -10,6 +10,7 @@ pub mod minimax_final;
 pub mod minimax_hard;
 pub mod minimax_killer;
 pub mod minimax_simple;
+pub mod minimax_fixed;
 pub mod monte_carlo_total;
 pub mod monte_carlo_tree_search;
 pub mod othello;
@@ -158,6 +159,7 @@ mod tests {
 	use crate::minimax_hard::*;
 	use crate::minimax_killer::*;
 	use crate::minimax_simple::*;
+	use crate::minimax_fixed::*;
 	use crate::monte_carlo_total::*;
 	use crate::monte_carlo_tree_search::*;
 	use crate::othello::*;
@@ -211,13 +213,13 @@ mod tests {
 	fn test_times() {
 		compete::<
 			Tablut,
-			MinimaxSimple<Tablut, DefaultHeuristic>,
 			MinimaxKiller<Tablut, DefaultHeuristic>,
+			MinimaxFixed<Tablut, DefaultHeuristic, 4>,
 		>(Duration::from_millis(300));
 		compete::<
 			Tablut,
+			MinimaxFixed<Tablut, DefaultHeuristic, 4>,
 			MinimaxKiller<Tablut, DefaultHeuristic>,
-			MinimaxSimple<Tablut, DefaultHeuristic>,
 		>(Duration::from_millis(300));
 	}
 
