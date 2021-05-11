@@ -224,8 +224,8 @@ mod tests {
 		>(Duration::from_millis(300));*/
 		compete::<
 			Tablut,
-			MinimaxFixed<Tablut, DefaultHeuristic, 5>,
-			MinimaxFixed<Tablut, DefaultHeuristic, 5>,
+			MinimaxFixed<Tablut, DefaultHeuristic, 4>,
+			MinimaxFixed<Tablut, DefaultHeuristic, 4>,
 		>(Duration::from_millis(300));
 	}
 

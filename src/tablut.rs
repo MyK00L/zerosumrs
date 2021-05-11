@@ -163,9 +163,11 @@ pub fn is_capture_aid(p: u8) -> bool {
 	CAPTURE_AID[p as usize]
 }
 impl Tablut {
+	#[inline(always)]
 	pub fn get(&self, pos: u8) -> Tile {
 		((self.board[(pos >> 2) as usize] >> (pos & 3) >> (pos & 3)) & 3).into()
 	}
+	#[inline(always)]
 	fn set(&mut self, pos: u8, v: Tile) {
 		self.board[(pos >> 2) as usize] &= !(3 << (pos & 3) << (pos & 3));
 		self.board[(pos >> 2) as usize] |= (v as u8) << (pos & 3) << (pos & 3);
