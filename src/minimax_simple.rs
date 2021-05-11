@@ -39,7 +39,11 @@ impl<G: Game, H: Heuristic<G>> MinimaxSimple<G, H> {
 				break;
 			}
 		}
-		if self.g.turn() { a } else { b }
+		if self.g.turn() {
+			a
+		} else {
+			b
+		}
 	}
 	fn minimax_move(&mut self, depth: u32) -> bool {
 		let mut a = i64::MIN;

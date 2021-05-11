@@ -7,15 +7,16 @@ pub mod game;
 pub mod heuristic;
 pub mod mancala;
 pub mod minimax_final;
+pub mod minimax_fixed;
 pub mod minimax_hard;
 pub mod minimax_killer;
 pub mod minimax_simple;
-pub mod minimax_fixed;
 pub mod monte_carlo_total;
 pub mod monte_carlo_tree_search;
 pub mod othello;
 pub mod random_agent;
 pub mod tablut;
+pub mod test_heuristic;
 pub mod tictactoe;
 
 use crate::ai::*;
@@ -156,10 +157,10 @@ mod tests {
 	use crate::game::*;
 	use crate::mancala::*;
 	use crate::minimax_final::*;
+	use crate::minimax_fixed::*;
 	use crate::minimax_hard::*;
 	use crate::minimax_killer::*;
 	use crate::minimax_simple::*;
-	use crate::minimax_fixed::*;
 	use crate::monte_carlo_total::*;
 	use crate::monte_carlo_tree_search::*;
 	use crate::othello::*;
@@ -211,15 +212,20 @@ mod tests {
 
 	#[test]
 	fn test_times() {
-		compete::<
+		/*compete::<
 			Tablut,
-			MinimaxKiller<Tablut, DefaultHeuristic>,
 			MinimaxFixed<Tablut, DefaultHeuristic, 4>,
+			MinimaxFixed<Tablut, test_heuristic::TestHeuristic, 4>,
 		>(Duration::from_millis(300));
 		compete::<
 			Tablut,
+			MinimaxFixed<Tablut, test_heuristic::TestHeuristic, 4>,
 			MinimaxFixed<Tablut, DefaultHeuristic, 4>,
-			MinimaxKiller<Tablut, DefaultHeuristic>,
+		>(Duration::from_millis(300));*/
+		compete::<
+			Tablut,
+			MinimaxFixed<Tablut, DefaultHeuristic, 4>,
+			MinimaxFixed<Tablut, DefaultHeuristic, 4>,
 		>(Duration::from_millis(300));
 	}
 

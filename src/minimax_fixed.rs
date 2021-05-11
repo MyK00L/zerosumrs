@@ -28,7 +28,11 @@ impl<G: Game, H: Heuristic<G>, const D: u32> MinimaxFixed<G, H, D> {
 				break;
 			}
 		}
-		if self.g.turn() { a } else { b }
+		if self.g.turn() {
+			a
+		} else {
+			b
+		}
 	}
 	fn minimax_move(&mut self, depth: u32) -> G::M {
 		let mut a = i64::MIN;

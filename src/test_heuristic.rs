@@ -5,10 +5,15 @@ use crate::othello;
 use crate::tablut;
 use crate::tictactoe;
 
-pub struct DefaultHeuristic;
+pub struct TestHeuristic;
 
-impl Heuristic<tablut::Tablut> for DefaultHeuristic {
+impl Heuristic<tablut::Tablut> for TestHeuristic {
 	fn eval(g: &tablut::Tablut) -> i64 {
+		const KV: [i64; 81] = [
+			0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 6, 6, 1, 0, 1, 6, 6, 0, 0, 6, 8, 2, 1, 2, 8, 6, 0, 0, 1, 2, 2,
+			4, 2, 2, 1, 0, 0, 0, 1, 4, 4, 4, 1, 0, 0, 0, 1, 2, 2, 4, 2, 2, 1, 0, 0, 6, 8, 2, 1, 2, 8, 6,
+			0, 0, 6, 6, 1, 0, 1, 6, 6, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+		];
 		match g.state() {
 			State::Win => 32768 - g.turn as i64,
 			State::Lose => -32768 + g.turn as i64,
@@ -19,6 +24,7 @@ impl Heuristic<tablut::Tablut> for DefaultHeuristic {
 				let mut ma = 0;
 				let mut md = 0;
 				let mut mk = 0;
+				let mut kp = 0;
 				for i in 0..81 {
 					let t = g.get(i);
 					if t == tablut::Tile::D {
@@ -26,6 +32,9 @@ impl Heuristic<tablut::Tablut> for DefaultHeuristic {
 					}
 					if t == tablut::Tile::A {
 						na += 1;
+					}
+					if t == tablut::Tile::K {
+						kp = i as usize;
 					}
 				}
 				// right
@@ -158,7 +167,7 @@ impl Heuristic<tablut::Tablut> for DefaultHeuristic {
 				}
 				//let mut ans = -16 + if g.turn() { 1 } else { -1 };
 				//nd * 6 - na * 3 - ma + 2 * md + 4 * mk
-				nd * 24 - na * 12 - ma + 2 * md + 4 * mk - 16 + if g.turn() { 1 } else { -1 }
+				nd * 24 - na * 12 - ma + 2 * md + 4 * mk - 16 + if g.turn() { 1 } else { -1 } + KV[kp] * 4
 			}
 		}
 	}

@@ -315,23 +315,7 @@ impl Game for Tablut {
 			];
 			let dif = if m.0 > m.1 { m.0 - m.1 } else { m.1 - m.0 };
 			let dist = if dif >= 9 { dif / 9 } else { dif };
-			if self.turn() {
-				if self.get(m.0) == Tile::K {
-					0
-				} else {
-					ORDI[(self.turn & 1) as usize][dist as usize]
-				}
-			} else {
-				if (m.1 % 9 < 8 && self.get(m.1 + 1) == Tile::K)
-					|| (m.1 % 9 > 0 && self.get(m.1 - 1) == Tile::K)
-					|| (m.1 < 8 * 9 && self.get(m.1 + 9) == Tile::K)
-					|| (m.1 > 8 && self.get(m.1 - 9) == Tile::K)
-				{
-					0
-				} else {
-					ORDI[(self.turn & 1) as usize][dist as usize]
-				}
-			}
+			ORDI[(self.turn & 1) as usize][dist as usize]
 		});
 		ans
 	}
