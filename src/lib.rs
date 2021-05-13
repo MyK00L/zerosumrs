@@ -10,6 +10,7 @@ pub mod minimax_final;
 pub mod minimax_fixed;
 pub mod minimax_hard;
 pub mod minimax_killer;
+pub mod minimax_killer_b;
 pub mod minimax_simple;
 pub mod monte_carlo_total;
 pub mod monte_carlo_tree_search;
@@ -160,6 +161,7 @@ mod tests {
 	use crate::minimax_fixed::*;
 	use crate::minimax_hard::*;
 	use crate::minimax_killer::*;
+	use crate::minimax_killer_b::*;
 	use crate::minimax_simple::*;
 	use crate::monte_carlo_total::*;
 	use crate::monte_carlo_tree_search::*;
@@ -224,9 +226,14 @@ mod tests {
 		>(Duration::from_millis(300));*/
 		compete::<
 			Tablut,
-			MinimaxFixed<Tablut, DefaultHeuristic, 4>,
-			MinimaxFixed<Tablut, DefaultHeuristic, 4>,
-		>(Duration::from_millis(300));
+			MinimaxKiller<Tablut, DefaultHeuristic>,
+			MinimaxKillerB<Tablut, DefaultHeuristic>,
+		>(Duration::from_millis(2000));
+		compete::<
+			Tablut,
+			MinimaxKillerB<Tablut, DefaultHeuristic>,
+			MinimaxKiller<Tablut, DefaultHeuristic>,
+		>(Duration::from_millis(2000));
 	}
 
 	use test::Bencher;

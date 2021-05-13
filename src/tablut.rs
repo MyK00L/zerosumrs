@@ -321,7 +321,7 @@ impl Game for Tablut {
 				if self.get(m.0) == Tile::K {
 					ORDI[(self.turn & 1) as usize][dist as usize]
 				} else {
-					ORDI[(self.turn & 1) as usize][dist as usize]+6
+					ORDI[(self.turn & 1) as usize][dist as usize] + 6
 				}
 			} else {
 				if (m.1 % 9 < 8 && self.get(m.1 + 1) == Tile::K)
