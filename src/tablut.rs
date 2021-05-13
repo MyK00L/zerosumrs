@@ -411,6 +411,8 @@ impl Game for Tablut {
 		self.turn -= 1;
 		self.state = State::Going;
 		let (m, rb) = rbf;
+		self.set(m.0, self.get(m.1));
+		self.set(m.1, Tile::E);
 		if m.1 + 9 < 81 {
 			self.set(m.1 + 9, rb.into());
 		}
@@ -423,8 +425,6 @@ impl Game for Tablut {
 		if m.1 >= 1 {
 			self.set(m.1 - 1, (rb >> 6).into());
 		}
-		self.set(m.0, self.get(m.1));
-		self.set(m.1, Tile::E);
 	}
 }
 impl std::fmt::Display for Tablut {

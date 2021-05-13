@@ -17,7 +17,7 @@ pub mod monte_carlo_tree_search;
 pub mod othello;
 pub mod random_agent;
 pub mod tablut;
-pub mod test_heuristic;
+pub mod tablut_heuristics;
 pub mod tictactoe;
 
 use crate::ai::*;
@@ -214,26 +214,16 @@ mod tests {
 
 	#[test]
 	fn test_times() {
-		/*compete::<
-			Tablut,
-			MinimaxFixed<Tablut, DefaultHeuristic, 4>,
-			MinimaxFixed<Tablut, test_heuristic::TestHeuristic, 4>,
-		>(Duration::from_millis(300));
 		compete::<
 			Tablut,
-			MinimaxFixed<Tablut, test_heuristic::TestHeuristic, 4>,
-			MinimaxFixed<Tablut, DefaultHeuristic, 4>,
-		>(Duration::from_millis(300));*/
+			MinimaxKiller<Tablut, tablut_heuristics::BmHeuristic>,
+			MinimaxKiller<Tablut, tablut_heuristics::MyHeuristic>,
+		>(Duration::from_millis(1000));
 		compete::<
 			Tablut,
-			MinimaxKiller<Tablut, DefaultHeuristic>,
-			MinimaxKillerB<Tablut, DefaultHeuristic>,
-		>(Duration::from_millis(2000));
-		compete::<
-			Tablut,
-			MinimaxKillerB<Tablut, DefaultHeuristic>,
-			MinimaxKiller<Tablut, DefaultHeuristic>,
-		>(Duration::from_millis(2000));
+			MinimaxKiller<Tablut, tablut_heuristics::MyHeuristic>,
+			MinimaxKiller<Tablut, tablut_heuristics::BmHeuristic>,
+		>(Duration::from_millis(1000));
 	}
 
 	use test::Bencher;
