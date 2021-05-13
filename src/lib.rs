@@ -216,13 +216,13 @@ mod tests {
 	fn test_times() {
 		compete::<
 			Tablut,
-			MinimaxKiller<Tablut, tablut_heuristics::BmHeuristic>,
 			MinimaxKiller<Tablut, tablut_heuristics::MyHeuristic>,
+			MinimaxKiller<Tablut, tablut_heuristics::FmHeuristic>,
 		>(Duration::from_millis(1000));
 		compete::<
 			Tablut,
+			MinimaxKiller<Tablut, tablut_heuristics::FmHeuristic>,
 			MinimaxKiller<Tablut, tablut_heuristics::MyHeuristic>,
-			MinimaxKiller<Tablut, tablut_heuristics::BmHeuristic>,
 		>(Duration::from_millis(1000));
 	}
 
