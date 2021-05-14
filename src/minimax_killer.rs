@@ -27,7 +27,7 @@ impl<G: Game, H: Heuristic<G>> MinimaxKiller<G, H> {
 			self.ended_early = true;
 			return if self.g.turn() { a } else { b };
 		}
-		let moves = self.g.get_moves_sorted();
+		let moves = self.g.get_moves();
 		let bm = self.best_mov[depth as usize];
 		if moves.contains(&bm) {
 			let rb = self.g.mov_with_rollback(&bm);

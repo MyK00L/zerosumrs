@@ -17,7 +17,7 @@ pub mod monte_carlo_tree_search;
 pub mod othello;
 pub mod random_agent;
 pub mod tablut;
-pub mod tablut_heuristics;
+//pub mod tablut_heuristics;
 pub mod tictactoe;
 
 use crate::ai::*;
@@ -127,6 +127,12 @@ pub fn compete<G: Game + Display, A: Ai<G>, B: Ai<G>>(tl: Duration) {
 			b.state()
 		);
 	}
+	if na == 0 {
+		na = 1;
+	}
+	if nb == 0 {
+		nb = 1;
+	}
 	eprintln!(
 		"{} avg think time: {:?}",
 		std::any::type_name::<A>(),
@@ -214,18 +220,82 @@ mod tests {
 
 	#[test]
 	fn test_times() {
+		/*compete::<
+			Tablut,
+			MinimaxKillerB<Tablut, DefaultHeuristic>,
+			MinimaxKillerB<Tablut, DefaultHeuristic>,
+		>(Duration::from_millis(60000));*/
 		compete::<
 			Tablut,
-			MinimaxKiller<Tablut, tablut_heuristics::MyHeuristic>,
-			MinimaxKiller<Tablut, tablut_heuristics::FmHeuristic>,
-		>(Duration::from_millis(1000));
-		compete::<
-			Tablut,
-			MinimaxKiller<Tablut, tablut_heuristics::FmHeuristic>,
-			MinimaxKiller<Tablut, tablut_heuristics::MyHeuristic>,
+			MinimaxFixed<Tablut, DefaultHeuristic, 5>,
+			MinimaxFixed<Tablut, DefaultHeuristic, 5>,
 		>(Duration::from_millis(1000));
 	}
+	/*
+		#[test]
+		fn test_tablut_new() {
+			let mut rng = Xoroshiro128Plus::from_rng(rand::thread_rng()).unwrap();
+			for _ in 0..10000 {
+				let mut g = Tablut::new(true);
+				let mut g_new = tablut_new::Tablut::new(true);
+				while g.state() == State::Going {
+					let mut moves: Vec<((u8, u8), (u8, u8))> = g
+						.get_moves()
+						.iter()
+						.map(|x| ((x.0 % 9, x.0 / 9), (x.1 % 9, x.1 / 9)))
+						.collect();
+					let mut moves_new: Vec<((u8, u8), (u8, u8))> = g_new
+						.get_moves()
+						.iter()
+						.map(|x| ((x.0 % 11 - 1, x.0 / 11 - 1), (x.1 % 11 - 1, x.1 / 11 - 1)))
+						.collect();
+					moves.sort();
+					moves_new.sort();
+					let mut diff = false;
+					if moves.len() != moves_new.len() {
+						diff = true;
+					} else {
+						for i in 0..moves.len() {
+							if moves[i] != moves_new[i] {
+								eprintln!("some move differs");
+								eprintln!("g:\n{}", g);
+								eprintln!("g_new:\n{}", g_new);
+								panic!();
+							}
+						}
+					}
+					if diff {
+						eprintln!("moves length differ");
+						eprintln!("g:\n{}", g);
+						eprintln!("g_new:\n{}", g_new);
+						/*eprintln!("moves: {:?}",moves);
+						eprintln!("moves_new: {:?}",moves_new);*/
+						for i in 0..moves.len() {
+							if moves[i]!=moves_new[i] {
+								eprintln!("move: {:?}",moves[i]);
+								eprintln!("move_new: {:?}",moves_new[i]);
+								panic!();
+							}
+						}
+						panic!();
+					}
 
+					let m = moves.choose(&mut rng).unwrap();
+					let m0 = (m.0 .0 + m.0 .1 * 9, m.1 .0 + m.1 .1 * 9);
+					let m1 = (m.0 .0 + m.0 .1 * 11 + 12, m.1 .0 + m.1 .1 * 11 + 12);
+					g.mov(&m0);
+					g_new.mov(&m1);
+					/*eprintln!("{:?}",m);
+					eprintln!("g:\n{}",g);
+					eprintln!("g_new:\n{}",g_new);*/
+				}
+				if g.state() != g_new.state() {
+					eprintln!("states differ");
+					panic!();
+				}
+			}
+		}
+	*/
 	use test::Bencher;
 	#[bench]
 	fn bench_tablut(b: &mut Bencher) {

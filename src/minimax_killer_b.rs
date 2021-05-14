@@ -33,7 +33,7 @@ impl<G: Game, H: Heuristic<G>> MinimaxKillerB<G, H> {
 			return (if self.g.turn() { a } else { b }, mv);
 		}
 
-		let moves = self.g.get_moves_sorted();
+		let moves = self.g.get_moves();
 		let bm = if best {
 			self.global_best[depth as usize]
 		} else {

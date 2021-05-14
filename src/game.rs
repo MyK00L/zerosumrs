@@ -2,7 +2,7 @@ use std::fmt::Debug;
 use std::fmt::Display;
 use std::hash::Hash;
 
-#[derive(Debug, Copy, Clone, PartialEq, Eq)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
 pub enum State {
 	Win,
 	Lose,

@@ -10,160 +10,51 @@ pub struct DefaultHeuristic;
 impl Heuristic<tablut::Tablut> for DefaultHeuristic {
 	fn eval(g: &tablut::Tablut) -> i64 {
 		match g.state() {
-			State::Win => 32768 - g.turn as i64,
-			State::Lose => -32768 + g.turn as i64,
+			State::Win => i64::MAX - g.turn as i64,
+			State::Lose => i64::MIN + g.turn as i64,
 			State::Draw => 0,
 			State::Going => {
-				let mut nd = 0;
-				let mut na = 0;
-				let mut ma = 0;
-				let mut md = 0;
-				let mut mk = 0;
-				for i in 0..81 {
-					let t = g.get(i);
-					if t == tablut::Tile::D {
-						nd += 1;
-					}
-					if t == tablut::Tile::A {
-						na += 1;
-					}
+				let nd = g.d.count_ones() as i64;
+				let na = g.a.count_ones() as i64;
+				let mut km = 0i64;
+				let kp = g.k.trailing_zeros();
+				let capturer = g.a | tablut::CAPTURE_AID;
+				let pass = !(g.a | g.d | tablut::BLOCK);
+
+				let mut i = kp;
+				while (pass >> i) & 1 != 0 {
+					i += 1;
+					km += 1;
 				}
-				// right
-				for y in 0..9 {
-					let mut last = tablut::Tile::E;
-					let mut lastp = 128u8;
-					for x in 0..9 {
-						let p = tablut::mapc(x, y);
-						let t = g.get(p);
-						if t == tablut::Tile::E {
-							if tablut::is_block_um(p)
-								&& (last == tablut::Tile::E || !tablut::is_block_um(lastp) || p - lastp > 2)
-							{
-								last = tablut::Tile::E;
-							} else if last != tablut::Tile::E {
-								match last {
-									tablut::Tile::D => {
-										md += 1;
-									}
-									tablut::Tile::K => {
-										mk += 1;
-									}
-									tablut::Tile::A => {
-										ma += 1;
-									}
-									_ => {}
-								}
-							}
-						} else {
-							last = t;
-							lastp = tablut::mapc(x, y);
-						}
-					}
+				km -= ((capturer >> i) & 1) as i64;
+
+				i = kp + 11;
+				while (pass >> i) & 1 != 0 {
+					i += 11;
+					km += 1;
 				}
-				// left
-				for y in 0..9 {
-					let mut last = tablut::Tile::E;
-					let mut lastp = 128u8;
-					for x in (0..9).rev() {
-						let p = tablut::mapc(x, y);
-						let t = g.get(p);
-						if t == tablut::Tile::E {
-							if tablut::is_block_um(p)
-								&& (last == tablut::Tile::E || !tablut::is_block_um(lastp) || lastp - p > 2)
-							{
-								last = tablut::Tile::E;
-							} else if last != tablut::Tile::E {
-								match last {
-									tablut::Tile::D => {
-										md += 1;
-									}
-									tablut::Tile::K => {
-										mk += 1;
-									}
-									tablut::Tile::A => {
-										ma += 1;
-									}
-									_ => {}
-								}
-							}
-						} else {
-							last = t;
-							lastp = tablut::mapc(x, y);
-						}
-					}
+				km -= ((capturer >> i) & 1) as i64;
+
+				i = kp - 1;
+				while (pass >> i) & 1 != 0 {
+					i -= 1;
+					km += 1;
 				}
-				// down
-				for x in 0..9 {
-					let mut last = tablut::Tile::E;
-					let mut lastp = 128u8;
-					for y in 0..9 {
-						let p = tablut::mapc(x, y);
-						let t = g.get(p);
-						if t == tablut::Tile::E {
-							if tablut::is_block_um(p)
-								&& (last == tablut::Tile::E || !tablut::is_block_um(lastp) || p - lastp > 2 * 9)
-							{
-								last = tablut::Tile::E;
-							} else if last != tablut::Tile::E {
-								match last {
-									tablut::Tile::D => {
-										md += 1;
-									}
-									tablut::Tile::K => {
-										mk += 1;
-									}
-									tablut::Tile::A => {
-										ma += 1;
-									}
-									_ => {}
-								}
-							}
-						} else {
-							last = t;
-							lastp = tablut::mapc(x, y);
-						}
-					}
+				km -= ((capturer >> i) & 1) as i64;
+
+				i = kp - 11;
+				while (pass >> i) & 1 != 0 {
+					i -= 11;
+					km += 1;
 				}
-				// up
-				for x in 0..9 {
-					let mut last = tablut::Tile::E;
-					let mut lastp = 128u8;
-					for y in (0..9).rev() {
-						let p = tablut::mapc(x, y);
-						let t = g.get(p);
-						if t == tablut::Tile::E {
-							if tablut::is_block_um(p)
-								&& (last == tablut::Tile::E || !tablut::is_block_um(lastp) || lastp - p > 2 * 9)
-							{
-								last = tablut::Tile::E;
-							} else if last != tablut::Tile::E {
-								match last {
-									tablut::Tile::D => {
-										md += 1;
-									}
-									tablut::Tile::K => {
-										mk += 1;
-									}
-									tablut::Tile::A => {
-										ma += 1;
-									}
-									_ => {}
-								}
-							}
-						} else {
-							last = t;
-							lastp = tablut::mapc(x, y);
-						}
-					}
-				}
-				//let mut ans = -16 + if g.turn() { 1 } else { -1 };
-				//nd * 6 - na * 3 - ma + 2 * md + 4 * mk
-				nd * 24 - na * 12 - ma + 2 * md + 4 * mk - 16 + if g.turn() { 1 } else { -1 }
+				km -= ((capturer >> i) & 1) as i64;
+
+				nd * 8 + km * 4 - na * 16
 			}
 		}
 	}
 }
-/*
+
 impl Heuristic<tictactoe::Tictactoe> for DefaultHeuristic {
 	fn eval(g: &tictactoe::Tictactoe) -> i64 {
 		match g.state() {
@@ -220,4 +111,4 @@ impl Heuristic<mancala::Mancala> for DefaultHeuristic {
 			}
 		}
 	}
-}*/
+}
