@@ -123,6 +123,11 @@ impl<G: Game, H: Heuristic<G>> Ai<G> for MinimaxKillerB<G, H> {
 	fn turn(&self) -> bool {
 		self.g.turn()
 	}
+
+	fn get_game(&self) -> &G {
+		&self.g
+	}
+
 	fn get_mov(&mut self, tl: Duration) -> G::M {
 		self.tl = tl - Duration::from_millis(20);
 		self.st = Instant::now();

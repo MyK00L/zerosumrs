@@ -93,6 +93,11 @@ impl<G: Game, H: Heuristic<G>> Ai<G> for MinimaxSimple<G, H> {
 	fn state(&self) -> State {
 		self.g.state()
 	}
+
+	fn get_game(&self) -> &G {
+		&self.g
+	}
+
 	fn print2game(&self) {
 		eprintln!("{}", self.g)
 	}

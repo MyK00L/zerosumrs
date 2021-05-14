@@ -44,6 +44,11 @@ impl<G: Game> Ai<G> for MonteCarloTotal<G> {
 	fn print2game(&self) {
 		eprintln!("{}", self.g)
 	}
+
+	fn get_game(&self) -> &G {
+		&self.g
+	}
+
 	fn turn(&self) -> bool {
 		self.g.turn()
 	}

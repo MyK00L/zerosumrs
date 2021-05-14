@@ -72,6 +72,10 @@ impl<G: Game, H: Heuristic<G>, const D: u32> Ai<G> for MinimaxFixed<G, H, D> {
 	fn state(&self) -> State {
 		self.g.state()
 	}
+
+	fn get_game(&self) -> &G {
+		&self.g
+	}
 	fn print2game(&self) {
 		eprintln!("{}", self.g)
 	}
