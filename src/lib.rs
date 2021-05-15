@@ -14,6 +14,7 @@ pub mod minimax_killer_b;
 pub mod minimax_simple;
 pub mod monte_carlo_total;
 pub mod monte_carlo_tree_search;
+pub mod old_tablut;
 pub mod othello;
 pub mod random_agent;
 pub mod tablut;
@@ -220,82 +221,111 @@ mod tests {
 
 	#[test]
 	fn test_times() {
-		/*compete::<
-			Tablut,
-			MinimaxKillerB<Tablut, DefaultHeuristic>,
-			MinimaxKillerB<Tablut, DefaultHeuristic>,
-		>(Duration::from_millis(60000));*/
 		compete::<
 			Tablut,
-			MinimaxFixed<Tablut, DefaultHeuristic, 5>,
-			MinimaxFixed<Tablut, DefaultHeuristic, 5>,
+			MinimaxSimple<Tablut, DefaultHeuristic>,
+			MinimaxKillerB<Tablut, DefaultHeuristic>,
+		>(Duration::from_millis(1000));
+		compete::<
+			Tablut,
+			MinimaxKillerB<Tablut, DefaultHeuristic>,
+			MinimaxSimple<Tablut, DefaultHeuristic>,
 		>(Duration::from_millis(1000));
 	}
-	/*
-		#[test]
-		fn test_tablut_new() {
-			let mut rng = Xoroshiro128Plus::from_rng(rand::thread_rng()).unwrap();
-			for _ in 0..10000 {
-				let mut g = Tablut::new(true);
-				let mut g_new = tablut_new::Tablut::new(true);
-				while g.state() == State::Going {
-					let mut moves: Vec<((u8, u8), (u8, u8))> = g
-						.get_moves()
-						.iter()
-						.map(|x| ((x.0 % 9, x.0 / 9), (x.1 % 9, x.1 / 9)))
-						.collect();
-					let mut moves_new: Vec<((u8, u8), (u8, u8))> = g_new
-						.get_moves()
-						.iter()
-						.map(|x| ((x.0 % 11 - 1, x.0 / 11 - 1), (x.1 % 11 - 1, x.1 / 11 - 1)))
-						.collect();
-					moves.sort();
-					moves_new.sort();
-					let mut diff = false;
-					if moves.len() != moves_new.len() {
-						diff = true;
-					} else {
-						for i in 0..moves.len() {
-							if moves[i] != moves_new[i] {
-								eprintln!("some move differs");
-								eprintln!("g:\n{}", g);
-								eprintln!("g_new:\n{}", g_new);
-								panic!();
-							}
-						}
-					}
-					if diff {
-						eprintln!("moves length differ");
-						eprintln!("g:\n{}", g);
-						eprintln!("g_new:\n{}", g_new);
-						/*eprintln!("moves: {:?}",moves);
-						eprintln!("moves_new: {:?}",moves_new);*/
-						for i in 0..moves.len() {
-							if moves[i]!=moves_new[i] {
-								eprintln!("move: {:?}",moves[i]);
-								eprintln!("move_new: {:?}",moves_new[i]);
-								panic!();
-							}
-						}
-						panic!();
-					}
 
-					let m = moves.choose(&mut rng).unwrap();
-					let m0 = (m.0 .0 + m.0 .1 * 9, m.1 .0 + m.1 .1 * 9);
-					let m1 = (m.0 .0 + m.0 .1 * 11 + 12, m.1 .0 + m.1 .1 * 11 + 12);
-					g.mov(&m0);
-					g_new.mov(&m1);
-					/*eprintln!("{:?}",m);
-					eprintln!("g:\n{}",g);
-					eprintln!("g_new:\n{}",g_new);*/
+	#[test]
+	fn test_new_tablut() {
+		let mut rng = Xoroshiro128Plus::from_rng(rand::thread_rng()).unwrap();
+		for _ in 0..10000 {
+			let mut g = old_tablut::Tablut::new(true);
+			let mut g_new = Tablut::new(true);
+			let mut rb = Vec::<<old_tablut::Tablut as Game>::R>::new();
+			let mut rb_new = Vec::<<Tablut as Game>::R>::new();
+			while g.state() == State::Going && g_new.state() == State::Going {
+				let mut moves: Vec<((u8, u8), (u8, u8))> = g
+					.get_moves()
+					.iter()
+					.map(|x| {
+						if x.0 == x.1 {
+							((0, 0), (0, 0))
+						} else {
+							((x.0 % 9, x.0 / 9), (x.1 % 9, x.1 / 9))
+						}
+					})
+					.collect();
+				let mut moves_new: Vec<((u8, u8), (u8, u8))> = g_new
+					.get_moves()
+					.iter()
+					.map(|x| {
+						if x.0 == x.1 {
+							((0, 0), (0, 0))
+						} else {
+							((x.0 % 11 - 1, x.0 / 11 - 1), (x.1 % 11 - 1, x.1 / 11 - 1))
+						}
+					})
+					.collect();
+				moves.sort();
+				moves_new.sort();
+				let mut diff = false;
+				if moves.len() != moves_new.len() {
+					diff = true;
+				} else {
+					for i in 0..moves.len() {
+						if moves[i] != moves_new[i] {
+							diff = true;
+							break;
+						}
+					}
 				}
-				if g.state() != g_new.state() {
-					eprintln!("states differ");
+				if diff {
+					eprintln!("moves differ");
+					eprintln!("g:\n{}", g);
+					eprintln!("g_new:\n{}", g_new);
+					eprintln!("moves: {:?}", moves);
+					eprintln!("moves_new: {:?}", moves_new);
+					for i in 0..(moves.len().max(moves_new.len())) {
+						if moves[i] != moves_new[i] {
+							eprintln!("move: {:?}", moves[i]);
+							eprintln!("move_new: {:?}", moves_new[i]);
+							panic!();
+						}
+					}
 					panic!();
 				}
+
+				let m = moves.choose(&mut rng).unwrap();
+				let m0 = (m.0 .0 + m.0 .1 * 9, m.1 .0 + m.1 .1 * 9);
+				let m1 = if *m == ((0, 0), (0, 0)) {
+					(0, 0)
+				} else {
+					(m.0 .0 + m.0 .1 * 11 + 12, m.1 .0 + m.1 .1 * 11 + 12)
+				};
+				rb.push(g.mov_with_rollback(&m0));
+				rb_new.push(g_new.mov_with_rollback(&m1));
+			}
+			if g.state() != g_new.state() {
+				eprintln!("states differ");
+
+				eprintln!("g state: {:?}", g.state());
+				eprintln!("g:\n{}", g);
+
+				eprintln!("g_new state: {:?}", g_new.state());
+				eprintln!("g_new:\n{}", g_new);
+
+				eprintln!("rolling back");
+				while !rb.is_empty() {
+					let trb = rb.pop().unwrap();
+					let trb_new = rb_new.pop().unwrap();
+					g.rollback(trb);
+					g_new.rollback(trb_new);
+					eprintln!("g:\n{}", g);
+					eprintln!("g_new:\n{}", g_new);
+				}
+
+				panic!();
 			}
 		}
-	*/
+	}
 	use test::Bencher;
 	#[bench]
 	fn bench_tablut(b: &mut Bencher) {

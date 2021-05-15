@@ -49,7 +49,7 @@ impl Heuristic<tablut::Tablut> for DefaultHeuristic {
 				}
 				km -= ((capturer >> i) & 1) as i64;
 
-				nd * 8 + km * 4 - na * 16
+				nd * 16 + km * 4 - na * 32
 			}
 		}
 	}

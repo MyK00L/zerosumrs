@@ -302,25 +302,29 @@ impl Game for Tablut {
 			if (capturers >> (m.1 - 22)) & 1 != 0 {
 				self.d &= !(1u128 << (m.1 - 11));
 			}
-			if self.k & K_SAFETY != 0 {
-				let kp = self.k.trailing_zeros();
-				let ksides =
-					(1u128 << (kp + 1)) | (1u128 << (kp + 11)) | (1u128 << (kp - 1)) | (1u128 << (kp - 11));
-				if (capturers & ksides).count_ones() == 4 {
-					self.k = 0;
-				}
-			} else {
-				if (capturers >> (m.1 + 2)) & 1 != 0 {
-					self.k &= !(1u128 << (m.1 + 1));
-				}
-				if (capturers >> (m.1 + 22)) & 1 != 0 {
-					self.k &= !(1u128 << (m.1 + 11));
-				}
-				if (capturers >> (m.1 - 2)) & 1 != 0 {
-					self.k &= !(1u128 << (m.1 - 1));
-				}
-				if (capturers >> (m.1 - 22)) & 1 != 0 {
-					self.k &= !(1u128 << (m.1 - 11));
+			let sides =
+				(1u128 << (m.1 + 1)) | (1u128 << (m.1 + 11)) | (1u128 << (m.1 - 1)) | (1u128 << (m.1 - 11));
+			if self.k & sides != 0 {
+				if self.k & K_SAFETY != 0 {
+					let kp = self.k.trailing_zeros();
+					let ksides =
+						(1u128 << (kp + 1)) | (1u128 << (kp + 11)) | (1u128 << (kp - 1)) | (1u128 << (kp - 11));
+					if (capturers & ksides).count_ones() == 4 {
+						self.k = 0;
+					}
+				} else {
+					if (capturers >> (m.1 + 2)) & 1 != 0 {
+						self.k &= !(1u128 << (m.1 + 1));
+					}
+					if (capturers >> (m.1 + 22)) & 1 != 0 {
+						self.k &= !(1u128 << (m.1 + 11));
+					}
+					if (capturers >> (m.1 - 2)) & 1 != 0 {
+						self.k &= !(1u128 << (m.1 - 1));
+					}
+					if (capturers >> (m.1 - 22)) & 1 != 0 {
+						self.k &= !(1u128 << (m.1 - 11));
+					}
 				}
 			}
 		}
