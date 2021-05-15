@@ -1,5 +1,5 @@
 use crate::game::*;
-use rustc_hash::*;
+//use rustc_hash::*;
 
 #[derive(Hash, Clone, Copy, PartialEq, Eq, Debug)]
 pub enum Tile {

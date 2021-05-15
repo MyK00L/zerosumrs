@@ -162,6 +162,32 @@ impl Default for Tablut {
 	}
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Tile {
+	E,
+	A,
+	D,
+	K,
+}
+impl Tablut {
+	pub fn get_board(&self) -> [[Tile; 9]; 9] {
+		let mut ans = [[Tile::E; 9]; 9];
+		for y in 0..9 {
+			for x in 0..9 {
+				let p = y * 11 + x + 12;
+				if (self.a >> p) & 1 != 0 {
+					ans[y][x] = Tile::A;
+				} else if (self.d >> p) & 1 != 0 {
+					ans[y][x] = Tile::D;
+				} else if (self.k >> p) & 1 != 0 {
+					ans[y][x] = Tile::K;
+				}
+			}
+		}
+		ans
+	}
+}
+
 impl Game for Tablut {
 	type M = (u8, u8);
 	type S = Self;
