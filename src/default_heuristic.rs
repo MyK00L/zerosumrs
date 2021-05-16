@@ -49,7 +49,11 @@ impl Heuristic<tablut::Tablut> for DefaultHeuristic {
 				}
 				km -= ((capturer >> i) & 1) as i64;
 
-				nd * 16 + km * 4 - na * 32 - (g.turn&1) as i64
+				let ksides =
+					(1u128 << (kp + 1)) | (1u128 << (kp + 11)) | (1u128 << (kp - 1)) | (1u128 << (kp - 11));
+				let en_near_k = (capturer & ksides).count_ones();
+
+				nd * 16 + km * 4 - na * 32 - en_near_k as i64 * 10 - (g.turn & 1) as i64
 			}
 		}
 	}
