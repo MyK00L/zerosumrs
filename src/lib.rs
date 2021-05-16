@@ -18,7 +18,7 @@ pub mod old_tablut;
 pub mod othello;
 pub mod random_agent;
 pub mod tablut;
-//pub mod tablut_heuristics;
+pub mod tablut_heuristics;
 pub mod tictactoe;
 
 use crate::ai::*;
@@ -175,6 +175,7 @@ mod tests {
 	use crate::othello::*;
 	use crate::random_agent::*;
 	use crate::tablut::*;
+	use crate::tablut_heuristics::*;
 	use crate::tictactoe::*;
 	use crate::*;
 	use std::time::Duration;
@@ -221,16 +222,12 @@ mod tests {
 
 	#[test]
 	fn test_times() {
-		compete::<
-			Tablut,
-			MinimaxSimple<Tablut, DefaultHeuristic>,
-			MinimaxKillerB<Tablut, DefaultHeuristic>,
-		>(Duration::from_millis(1000));
-		compete::<
-			Tablut,
-			MinimaxKillerB<Tablut, DefaultHeuristic>,
-			MinimaxSimple<Tablut, DefaultHeuristic>,
-		>(Duration::from_millis(1000));
+		compete::<Tablut, MinimaxKillerB<Tablut, DefaultHeuristic>, MinimaxKillerB<Tablut, FmHeuristic>>(
+			Duration::from_millis(1000),
+		);
+		compete::<Tablut, MinimaxKillerB<Tablut, FmHeuristic>, MinimaxKillerB<Tablut, DefaultHeuristic>>(
+			Duration::from_millis(1000),
+		);
 	}
 
 	#[test]
